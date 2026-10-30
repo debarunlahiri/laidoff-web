@@ -18,7 +18,7 @@ export function useMessages(
   navigate: (section: string) => void,
 ) {
   const list = useApiList<ApiConversation>(
-    section === "Messages" ? "/conversations" : null,
+    userId && section === "Messages" ? "/conversations" : null,
     15000,
   );
   const [selected, setSelected] = useState<string | null>(null);

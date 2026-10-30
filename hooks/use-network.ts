@@ -10,14 +10,14 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
     following: number;
     outgoingRequests: number;
     incomingRequests: number;
-  }>("/network/stats", {
+  }>(userId ? "/network/stats" : null, {
     connections: 0,
     following: 0,
     outgoingRequests: 0,
     incomingRequests: 0,
   });
   const users = useApiList<ApiPerson>("/users");
-  const links = useApiList<ApiConnection>("/connections");
+  const links = useApiList<ApiConnection>(userId ? "/connections" : null);
   const [pending, setPending] = useState<string[]>([]);
   const following = users.data
     .filter((person) => person.following)

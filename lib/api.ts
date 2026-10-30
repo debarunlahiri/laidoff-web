@@ -26,8 +26,13 @@ export async function api<T = void>(
   });
   const data = response.status === 204 ? undefined : await response.json();
   if (!response.ok) {
-    if (response.status === 401)
+    if (response.status === 401) {
       window.dispatchEvent(new Event("auth:expired"));
+      if (options.method && options.method !== "GET")
+        window.location.assign(
+          `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+        );
+    }
     throw new ApiError(
       data?.error?.message ?? "The request failed. Please try again.",
       response.status,

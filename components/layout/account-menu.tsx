@@ -45,6 +45,13 @@ export default function AccountMenu() {
     };
   }, [open]);
 
+  if (!user)
+    return (
+      <Link className="primary" href="/login">
+        Sign in
+      </Link>
+    );
+
   return (
     <div
       className="account-menu"
@@ -116,7 +123,7 @@ export default function AccountMenu() {
               setOpen(false);
               try {
                 await logout();
-                router.replace("/login");
+                router.replace("/");
               } catch {
                 notify("Could not sign out. Please try again.");
               }

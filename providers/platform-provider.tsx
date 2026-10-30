@@ -67,7 +67,7 @@ function usePlatformState() {
 type PlatformState = ReturnType<typeof usePlatformState>;
 const PlatformContext = createContext<PlatformState | null>(null);
 
-export function PlatformProvider({ children }: { children: ReactNode }) {
+function PlatformSession({ children }: { children: ReactNode }) {
   const state = usePlatformState();
   return (
     <PlatformContext.Provider value={state}>
@@ -81,4 +81,11 @@ export function usePlatform() {
   if (!context)
     throw new Error("usePlatform must be used within PlatformProvider");
   return context;
+}
+
+export function PlatformProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  return (
+    <PlatformSession key={user?.id ?? "guest"}>{children}</PlatformSession>
+  );
 }

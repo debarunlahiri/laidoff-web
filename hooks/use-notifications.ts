@@ -1,14 +1,19 @@
 "use client";
+import { useAuth } from "@/providers/auth-provider";
 import { api, apiMessage, invalidate } from "@/lib/api";
 import type { ApiNotification } from "@/lib/api-types";
 import { useApiList, useApiResource } from "./use-api-resource";
 export function useNotifications(notify: (message: string) => void) {
+  const { user } = useAuth();
   const summary = useApiResource<{ unread: number; unreadMessages: number }>(
-    "/notifications/summary",
+    user ? "/notifications/summary" : null,
     { unread: 0, unreadMessages: 0 },
     20000,
   );
-  const list = useApiList<ApiNotification>("/notifications", 20000);
+  const list = useApiList<ApiNotification>(
+    user ? "/notifications" : null,
+    20000,
+  );
   async function markNotificationRead(id?: string) {
     try {
       await api(id ? `/notifications/${id}/read` : "/notifications/read", {

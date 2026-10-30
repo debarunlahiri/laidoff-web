@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 
 export default function Topbar() {
   const {
+    currentUser,
     section,
     setSection,
     search,
@@ -108,7 +109,15 @@ export default function Topbar() {
           aria-label="Notifications"
           aria-expanded={notifications}
           aria-controls={notifications ? "notification-panel" : undefined}
-          onClick={() => setNotifications(!notifications)}
+          onClick={() => {
+            if (!currentUser) {
+              window.location.assign(
+                `/login?next=${encodeURIComponent(pathname)}`,
+              );
+              return;
+            }
+            setNotifications(!notifications);
+          }}
         >
           <Bell size={20} />
           {notificationCount > 0 && <i />}

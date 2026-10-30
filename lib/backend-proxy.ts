@@ -28,7 +28,13 @@ export async function proxyBackend(
   media = false,
 ) {
   const token = request.cookies.get("laidoff_session")?.value;
-  if (!token) return errorResponse("Please sign in", 401);
+  const publicRead =
+    request.method === "GET" &&
+    (media ||
+      /^(posts(?:\/topics|\/[a-zA-Z0-9-]+\/comments)?|referrals|companies(?:\/[a-zA-Z0-9-]+)?|users(?:\/[a-zA-Z0-9-]+)?|insights(?:\/[-a-zA-Z0-9_]+)*)$/.test(
+        segments.join("/"),
+      ));
+  if (!token && !publicRead) return errorResponse("Please sign in", 401);
   if (
     media
       ? !/^[0-9a-f-]{36}\.webp$/.test(segments[0] ?? "")
@@ -47,7 +53,9 @@ export async function proxyBackend(
     const url = media
       ? `${base.replace(/\/api\/v1$/, "")}/uploads/${segments[0]}`
       : `${base}/${segments.join("/")}${request.nextUrl.search}`;
-    const headers = new Headers({ Authorization: `Bearer ${token}` });
+    const headers = new Headers(
+      token ? { Authorization: `Bearer ${token}` } : {},
+    );
     const contentType = request.headers.get("content-type");
     if (contentType) headers.set("Content-Type", contentType);
     const agent = request.headers.get("user-agent");

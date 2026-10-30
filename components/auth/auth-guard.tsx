@@ -7,10 +7,18 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading, sessionError, refreshSession } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const publicPage = [
+    "/",
+    "/explore",
+    "/referrals",
+    "/network",
+    "/insights",
+  ].includes(pathname);
   useEffect(() => {
-    if (!loading && !user && !sessionError)
+    if (!publicPage && !loading && !user && !sessionError)
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-  }, [loading, user, sessionError, pathname, router]);
+  }, [loading, user, sessionError, pathname, router, publicPage]);
+  if (publicPage) return children;
   if (sessionError)
     return (
       <div className="auth-loading" role="alert">

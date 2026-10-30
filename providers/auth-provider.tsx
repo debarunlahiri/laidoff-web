@@ -78,7 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener("visibilitychange", update);
     window.addEventListener("auth:expired", update);
-    return () => document.removeEventListener("visibilitychange", update);
+    return () => {
+      document.removeEventListener("visibilitychange", update);
+      window.removeEventListener("auth:expired", update);
+    };
   }, [refreshSession]);
   async function complete(action: string, body: unknown) {
     epoch.current++;

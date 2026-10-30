@@ -34,6 +34,12 @@ export default function ComposerTrigger() {
   }, [expanded]);
 
   function expand(nextTopic?: string) {
+    if (!currentUser) {
+      window.location.assign(
+        `/login?next=${encodeURIComponent(window.location.pathname)}`,
+      );
+      return;
+    }
     if (nextTopic) setTopic(nextTopic);
     setExpanded(true);
   }
@@ -172,7 +178,7 @@ export default function ComposerTrigger() {
         <button
           onClick={() => {
             expand();
-            fileInput.current?.click();
+            if (currentUser) fileInput.current?.click();
           }}
         >
           <ImagePlus size={17} />

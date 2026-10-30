@@ -1,4 +1,5 @@
 "use client";
+import { useAuth } from "@/providers/auth-provider";
 import { useState } from "react";
 import {
   api,
@@ -23,6 +24,7 @@ export function useFeed(
   search: string,
   notify: (message: string) => void,
 ) {
+  const { user } = useAuth();
   const [tab, setTab] = useState("For you");
   const [feedTopic, setFeedTopic] = useState("");
   const [exploreTopic, setExploreTopic] = useState("All");
@@ -66,7 +68,7 @@ export function useFeed(
       : null,
   );
   const hidden = useApiResource<ApiPost[]>(
-    enabled ? "/posts?tab=hidden&limit=100" : null,
+    enabled && user ? "/posts?tab=hidden&limit=100" : null,
     [],
   );
   const commentList = useApiList<ApiComment>(
