@@ -1,0 +1,146 @@
+.account-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.account-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+}
+.account-summary strong,
+.account-summary small {
+  display: block;
+}
+.account-summary strong {
+  font-size: 13px;
+}
+.account-summary small {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.account-menu-trigger {
+  width: 34px;
+  height: 34px;
+}
+.account-menu-trigger[aria-expanded="true"] {
+  background: #edf2ff;
+  color: var(--green);
+}
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 16px);
+  right: 0;
+  width: min(290px, calc(100vw - 32px));
+  padding: 8px;
+  box-shadow: 0 12px 36px #172b4d24;
+  z-index: 40;
+}
+.account-dropdown-heading {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+.account-dropdown-heading strong,
+.account-dropdown-heading span {
+  display: block;
+}
+.account-dropdown-heading span {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.account-dropdown > a,
+.account-dropdown > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  text-align: left;
+  line-height: 1.5;
+}
+.account-dropdown > a:hover,
+.account-dropdown > button:hover {
+  background: #edf2ff;
+  color: var(--green);
+}
+.header-actions {
+  margin-left: auto;
+}
+.profile-page {
+  overflow: hidden;
+}
+.profile-cover {
+  height: 130px;
+  background: linear-gradient(120deg, #203968, #6688ed);
+}
+.profile-page-content {
+  padding: 0 30px 30px;
+}
+.profile-identity {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -38px;
+  position: relative;
+}
+.profile-identity > .avatar {
+  width: 90px;
+  height: 90px;
+  font-size: 28px;
+  border: 5px solid white;
+}
+.profile-page h2 {
+  font-size: 27px;
+  margin-top: 18px;
+}
+.profile-role {
+  color: var(--muted);
+  margin-top: 8px;
+  font-size: 15px;
+}
+.profile-section {
+  margin-top: 26px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.profile-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.profile-section p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #475569;
+}
+.profile-page .profile-skills {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .account-summary {
+    display: none;
+  }
+  .account-menu {
+    gap: 4px;
+  }
+  .header-actions {
+    gap: 8px;
+  }
+  .profile-page-content {
+    padding: 0 20px 24px;
+  }
+  .profile-identity {
+    flex-wrap: wrap;
+  }
+}

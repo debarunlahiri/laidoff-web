@@ -1,0 +1,351 @@
+.right-rail {
+  padding-top: 0;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  color: #5e697d;
+  margin-bottom: 22px;
+}
+.search-box input {
+  border: 0;
+  outline: none;
+  background: none;
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+  color: var(--ink);
+}
+.search-box > span {
+  font-size: 11px;
+  border: 1px solid #e4e8ef;
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.daily-card {
+  background: #eceff4;
+  border-color: #e0e4ec;
+  padding: 18px 19px 22px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.rail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.rail-heading h3 {
+  font-size: 13px;
+  font-weight: 700;
+}
+.rail-heading > svg {
+  color: #586174;
+}
+.daily-card .rail-heading h3 {
+  font-size: 11px;
+  color: #4f5869;
+  font-weight: 500;
+}
+.daily-card > p {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  line-height: 1.45;
+  margin-top: 17px;
+  color: #3e4e6d;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.3px;
+}
+.daily-card > span {
+  font-size: 11px;
+  color: #5d677b;
+  display: block;
+  margin-top: 12px;
+  position: relative;
+  z-index: 1;
+}
+.quote-decoration {
+  width: 140px;
+  height: 140px;
+  border: 1px solid #d8dde8;
+  border-radius: 50%;
+  position: absolute;
+  right: -75px;
+  bottom: -80px;
+  box-shadow:
+    0 0 0 13px #e0e4ec,
+    0 0 0 14px #adb4c1,
+    0 0 0 27px #e4e8ef,
+    0 0 0 28px #adb4c1;
+}
+.rail-card {
+  padding: 18px 17px 0;
+  margin-bottom: 20px;
+}
+.rail-subtitle {
+  font-size: 11px;
+  color: #677389;
+  margin: 6px 0 19px;
+}
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+.suggestion > div {
+  flex: 1;
+  min-width: 0;
+}
+.suggestion strong {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.suggestion > div > span {
+  display: block;
+  font-size: 11px;
+  color: #606a7f;
+  white-space: nowrap;
+}
+.suggestion small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6c788f;
+  margin-top: 5px;
+}
+.connect-icon {
+  border: 1px solid #dee2eb;
+  border-radius: 5px;
+  width: 29px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  color: #4f5869;
+}
+.connect-icon.connected {
+  background: #edeff4;
+}
+.rail-link {
+  border-top: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4c6188;
+  padding: 13px 0;
+}
+.company-logo {
+  width: 35px;
+  height: 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 22px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.purple {
+  background: #efecfb;
+  color: #8270c1;
+}
+.green {
+  background: #f0f2f6;
+  color: #525b6d;
+}
+.orange {
+  background: #fcf0e6;
+  color: #c3926e;
+}
+.mini-opportunity {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 9px;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 18px;
+}
+.mini-opportunity > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.mini-opportunity strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mini-opportunity small {
+  display: block;
+  font-size: 11px;
+  margin: 5px 0;
+  color: #646f85;
+}
+.mini-opportunity > svg {
+  color: #69758b;
+}
+.referral-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #566072;
+}
+.rail-trending {
+  padding: 2px 5px 15px;
+}
+.rail-trending .rail-heading {
+  margin-bottom: 19px;
+}
+.rail-trending > button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  margin-bottom: 17px;
+}
+.trend-number {
+  color: #818ba0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+.rail-trending > button > span:nth-child(2) {
+  flex: 1;
+}
+.rail-trending strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4f5869;
+}
+.rail-trending small {
+  display: block;
+  font-size: 11px;
+  color: #6d7990;
+  margin-top: 4px;
+}
+.rail-trending > button > svg {
+  color: #677389;
+}
+footer {
+  border-top: 1px solid #e0e4ec;
+  padding: 17px 5px;
+  font-size: 11px;
+  color: #717d94;
+  line-height: 2.5;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+footer p {
+  width: 100%;
+  font-size: 11px;
+}
+footer p span {
+  margin-left: 8px;
+}
+
+/* Supporting information uses the same visual hierarchy as the feed. */
+.search-box {
+  min-height: 48px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.search-box input {
+  font-size: 13px;
+}
+.search-box > span {
+  display: none;
+}
+.daily-card {
+  background: #fff;
+  border-color: #e0e6ef;
+  padding: 22px;
+  border-top: 3px solid #5475df;
+}
+.daily-card .rail-heading h3 {
+  color: #5f7194;
+  font-size: 11px;
+  font-weight: 700;
+}
+.daily-card > p {
+  font-size: 22px;
+  font-weight: 600;
+  color: #253655;
+}
+.quote-decoration {
+  display: none;
+}
+.rail-card {
+  padding: 22px 20px 0;
+}
+.rail-heading h3 {
+  font-size: 15px;
+}
+.rail-subtitle {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.suggestion {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.suggestion strong,
+.mini-opportunity strong {
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.suggestion > div > span {
+  white-space: normal;
+  line-height: 1.5;
+}
+.suggestion small {
+  line-height: 1.5;
+}
+.connect-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  color: var(--green);
+  background: #f5f7ff;
+}
+.rail-link {
+  font-size: 12px;
+  min-height: 48px;
+  color: var(--green);
+}
+.rail-trending {
+  padding: 10px 5px 15px;
+}
+.rail-trending strong {
+  font-size: 13px;
+  color: #39465c;
+}
+.rail-trending small,
+.mini-opportunity small {
+  font-size: 11px;
+  line-height: 1.5;
+}
+footer,
+footer p {
+  font-size: 11px;
+  color: #64748b;
+}
