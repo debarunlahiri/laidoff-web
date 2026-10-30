@@ -3,18 +3,18 @@ import { discoveryTopics } from "@/config/feed";
 import PostCard from "@/components/feed/post-card";
 import { usePlatform } from "@/providers/platform-provider";
 import { Search } from "lucide-react";
-import { useState } from "react";
 
 export default function ExploreView() {
-  const { visiblePosts: posts, search } = usePlatform();
-  const [selectedTopic, setSelectedTopic] = useState("All");
-  const visiblePosts = posts.filter(
-    (post) =>
-      (selectedTopic === "All" || post.topic === selectedTopic) &&
-      `${post.name} ${post.company} ${post.text} ${post.topic}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-  );
+  const {
+    visiblePosts,
+    search,
+    exploreTopic: selectedTopic,
+    setExploreTopic: setSelectedTopic,
+    feedLoading,
+    feedError,
+    feedHasMore,
+    loadMorePosts,
+  } = usePlatform();
 
   return (
     <>
@@ -46,7 +46,18 @@ export default function ExploreView() {
       {visiblePosts.map((post) => (
         <PostCard key={post.id} post={post} />
       ))}
-      {visiblePosts.length === 0 && (
+      {feedLoading && <p role="status">Loading conversations…</p>}
+      {feedError && <p role="alert">{feedError}</p>}
+      {feedHasMore && (
+        <button
+          className="secondary"
+          disabled={feedLoading}
+          onClick={() => void loadMorePosts()}
+        >
+          Load more posts
+        </button>
+      )}
+      {!feedLoading && !feedError && visiblePosts.length === 0 && (
         <div className="empty card">
           <Search size={28} />
           <h3>No matches yet</h3>

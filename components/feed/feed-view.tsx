@@ -1,4 +1,5 @@
 "use client";
+import { postTopics } from "@/config/feed";
 import Popover from "@/components/ui/popover";
 import { feedTabs } from "@/config/feed";
 import PostCard from "@/components/feed/post-card";
@@ -18,7 +19,11 @@ export default function FeedView() {
     setTab,
     navigate,
     filteredPosts,
-    posts,
+    companies,
+    feedLoading,
+    feedError,
+    feedHasMore,
+    loadMorePosts,
     feedTopic,
     setFeedTopic,
     feedCompany,
@@ -27,7 +32,7 @@ export default function FeedView() {
     setFeedSort,
     resetFeedFilters,
     hiddenPosts,
-    setHiddenPosts,
+    restoreHiddenPosts,
     setSearch,
   } = usePlatform();
 
@@ -57,11 +62,9 @@ export default function FeedView() {
                   onChange={(event) => setFeedTopic(event.target.value)}
                 >
                   <option value="">All topics</option>
-                  {[...new Set(posts.map((post) => post.topic))]
-                    .sort()
-                    .map((topic) => (
-                      <option key={topic}>{topic}</option>
-                    ))}
+                  {postTopics.map((topic) => (
+                    <option key={topic}>{topic}</option>
+                  ))}
                 </select>
               </label>
               <label>
@@ -71,15 +74,11 @@ export default function FeedView() {
                   onChange={(event) => setFeedCompany(event.target.value)}
                 >
                   <option value="">All companies</option>
-                  {[
-                    ...new Set(
-                      posts.map((post) => post.company).filter(Boolean),
-                    ),
-                  ]
-                    .sort()
-                    .map((company) => (
-                      <option key={company}>{company}</option>
-                    ))}
+                  {companies.map((company) => (
+                    <option value={company.id} key={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label>
@@ -115,7 +114,7 @@ export default function FeedView() {
           <span>
             {[
               feedTopic,
-              feedCompany,
+              companies.find((company) => company.id === feedCompany)?.name,
               feedSort !== "Latest" && tab !== "Latest" ? feedSort : "",
             ]
               .filter(Boolean)
@@ -125,7 +124,7 @@ export default function FeedView() {
             className="text-button"
             onClick={() => {
               resetFeedFilters();
-              setHiddenPosts([]);
+              void restoreHiddenPosts();
             }}
           >
             Reset
@@ -150,7 +149,26 @@ export default function FeedView() {
       {filteredPosts.map((post) => (
         <PostCard key={post.id} post={post} />
       ))}
-      {!filteredPosts.length && (
+      {feedLoading && (
+        <p role="status" className="subtle-text">
+          Loading posts…
+        </p>
+      )}
+      {feedError && (
+        <p role="alert" className="api-error">
+          {feedError}
+        </p>
+      )}
+      {feedHasMore && (
+        <button
+          className="secondary"
+          disabled={feedLoading}
+          onClick={() => void loadMorePosts()}
+        >
+          Load more posts
+        </button>
+      )}
+      {!feedLoading && !feedError && !filteredPosts.length && (
         <div className="empty card">
           <Bookmark size={28} />
           <h3>

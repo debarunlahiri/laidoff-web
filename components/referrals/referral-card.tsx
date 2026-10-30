@@ -4,7 +4,13 @@ import type { ReferralOpportunity } from "@/types";
 import { ArrowUpRight, Check } from "lucide-react";
 
 export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
-  const { requested, requestReferral } = usePlatform();
+  const {
+    requested,
+    requestReferral,
+    setReferralStatus,
+    setRequestReferralId,
+    referralPending,
+  } = usePlatform();
 
   const requestId = item.id ?? `${item.company}-${item.title}`;
 
@@ -14,9 +20,11 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
         <span className={`company-logo ${item.color}`}>{item.letter}</span>
         <span>
           <strong>{item.company}</strong>
-          <small>Employee referral · Demo opportunity</small>
+          <small>Employee referral</small>
         </span>
-        <span className="tag green-tag">Accepting requests</span>
+        <span className="tag green-tag">
+          {item.status === "closed" ? "Closed" : "Accepting requests"}
+        </span>
       </div>
       <h2>{item.title}</h2>
       <p>{item.location}</p>
@@ -29,16 +37,45 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
           Offered by <strong>{item.person}</strong>
         </span>
         {item.own ? (
-          <span className="tag">Your referral</span>
+          <div className="referral-owner-actions">
+            <button
+              className="text-button"
+              onClick={() => item.id && setRequestReferralId(item.id)}
+            >
+              View requests
+            </button>
+            <button
+              className="secondary"
+              disabled={referralPending.includes(requestId)}
+              onClick={() =>
+                item.id &&
+                setReferralStatus(
+                  item.id,
+                  item.status === "closed" ? "open" : "closed",
+                )
+              }
+            >
+              {item.status === "closed" ? "Reopen referral" : "Close referral"}
+            </button>
+          </div>
         ) : (
           <button
+            disabled={
+              Boolean(item.requestStatus) ||
+              item.status === "closed" ||
+              referralPending.includes(requestId)
+            }
             className={requested.includes(requestId) ? "secondary" : "primary"}
             onClick={() => requestReferral(requestId)}
           >
             {requested.includes(requestId) ? (
               <>
                 <Check size={15} />
-                Requested
+                {item.requestStatus === "accepted"
+                  ? "Accepted"
+                  : item.requestStatus === "declined"
+                    ? "Declined"
+                    : "Requested"}
               </>
             ) : (
               <>

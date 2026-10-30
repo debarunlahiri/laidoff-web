@@ -1,7 +1,7 @@
 import type { Post } from "@/types";
 export const initialPosts: Post[] = [
   {
-    id: 1,
+    id: "1",
     name: "Sarah Chen",
     role: "Product Designer · Previously at Nimbus",
     avatar: "SC",
@@ -17,7 +17,7 @@ export const initialPosts: Post[] = [
     following: true,
   },
   {
-    id: 2,
+    id: "2",
     name: "Marcus Johnson",
     role: "Senior Software Engineer at Orbit",
     avatar: "MJ",
@@ -32,7 +32,7 @@ export const initialPosts: Post[] = [
     referral: true,
   },
   {
-    id: 3,
+    id: "3",
     name: "Priya Sharma",
     role: "People & Culture · Career advocate",
     avatar: "PS",
@@ -47,7 +47,7 @@ export const initialPosts: Post[] = [
     following: true,
   },
   {
-    id: 4,
+    id: "4",
     name: "Alex Rivera",
     role: "Technology writer · Workforce trends",
     avatar: "AR",

@@ -1,13 +1,12 @@
 "use client";
-import { yearlyReportedRoles } from "@/data/workforce";
 import CompanyTable from "@/components/insights/company-table";
 import WorkforceChart from "@/components/insights/workforce-chart";
 import { usePlatform } from "@/providers/platform-provider";
 import { ShieldCheck } from "lucide-react";
-
 export default function InsightsView() {
-  const { year, setYear } = usePlatform();
-
+  const { year, setYear, insights, insightsLoading, insightsError } =
+    usePlatform();
+  const current = new Date().getFullYear();
   return (
     <>
       <div className="section-bar">
@@ -15,33 +14,43 @@ export default function InsightsView() {
         <select
           aria-label="Reporting year"
           value={year}
-          onChange={(e) => setYear(e.target.value)}
+          onChange={(event) => setYear(event.target.value)}
         >
-          <option>2026</option>
-          <option>2025</option>
-          <option>2024</option>
+          {Array.from(
+            { length: Math.max(3, current - 2023) },
+            (_, i) => current - i,
+          ).map((item) => (
+            <option key={item}>{item}</option>
+          ))}
         </select>
       </div>
       <div className="insight-disclaimer">
         <ShieldCheck size={20} />
-        <span>
-          Illustrative data only. These fictional companies and figures
-          demonstrate the dashboard, and do not represent actual employment
-          trends.
-        </span>
+        <span>{insights.notice}</span>
       </div>
+      {insightsLoading && <p role="status">Loading workforce reports…</p>}
+      {insightsError && <p role="alert">{insightsError}</p>}
       <div className="network-stats">
         <div className="card">
-          <strong>{yearlyReportedRoles[year]}</strong>
+          <strong>
+            {insights.companies
+              .reduce((sum, item) => sum + Number(item.rolesAffected), 0)
+              .toLocaleString()}
+          </strong>
           <span>Reported roles affected</span>
         </div>
         <div className="card">
-          <strong>3</strong>
-          <span>Companies tracked</span>
+          <strong>{insights.companies.length}</strong>
+          <span>Companies reported</span>
         </div>
         <div className="card">
-          <strong>6</strong>
-          <span>Illustrative events</span>
+          <strong>
+            {insights.monthly.reduce(
+              (sum, item) => sum + Number(item.reports),
+              0,
+            )}
+          </strong>
+          <span>Submitted reports</span>
         </div>
       </div>
       <WorkforceChart />

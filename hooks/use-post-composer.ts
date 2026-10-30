@@ -1,15 +1,12 @@
 "use client";
-import type { Post } from "@/types";
-import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
+import { api, apiMessage, invalidate } from "@/lib/api";
 export function usePostComposer({
-  setPosts,
   setTab,
   navigate,
   notify,
 }: {
-  setPosts: Dispatch<SetStateAction<Post[]>>;
-  setTab: Dispatch<SetStateAction<string>>;
+  setTab: (tab: string) => void;
   navigate: (section: string) => void;
   notify: (message: string) => void;
 }) {
@@ -19,40 +16,54 @@ export function usePostComposer({
   const [topic, setTopic] = useState("");
   const [company, setCompany] = useState("");
   const [anonymous, setAnonymous] = useState(false);
-  function publish() {
-    if (!draft.trim()) return;
-    setPosts((current) => [
-      {
-        id: Date.now(),
-        name: anonymous ? "Anonymous member" : "Jamie Morgan",
-        role: anonymous
-          ? "Community member"
-          : "Product Designer · Open to work",
-        avatar: anonymous ? "AM" : "JM",
-        color: "mint",
-        time: "Just now",
-        topic: topic || "General discussion",
-        company,
-        text: draft.trim(),
-        image: postImage || undefined,
-        likes: 0,
-        comments: 0,
-        reposts: 0,
-      },
-      ...current,
-    ]);
-    setDraft("");
-    setPostImage("");
-    setComposer(false);
-    navigate("Home");
-    setTab("Latest");
-    notify("Your post is now in the global feed.");
+  const [postSaving, setPostSaving] = useState(false);
+  async function publish() {
+    if (postSaving || !draft.trim()) return false;
+    setPostSaving(true);
+    try {
+      let uploadId: string | undefined;
+      if (postImage) {
+        const response = await fetch(postImage);
+        const blob = await response.blob();
+        const body = new FormData();
+        body.append("photo", blob, "post-photo");
+        uploadId = (
+          await api<{ id: string }>("/uploads", { method: "POST", body })
+        ).id;
+      }
+      await api("/posts", {
+        method: "POST",
+        body: {
+          text: draft.trim(),
+          topic: topic || "General discussion",
+          companyId: company || null,
+          anonymous,
+          uploadId: uploadId ?? null,
+        },
+      });
+      setDraft("");
+      setPostImage("");
+      setCompany("");
+      setTopic("");
+      setAnonymous(false);
+      setComposer(false);
+      setTab("Latest");
+      navigate("Home");
+      invalidate("posts");
+      notify("Your post has been published.");
+      return true;
+    } catch (error) {
+      notify(apiMessage(error));
+      return false;
+    } finally {
+      setPostSaving(false);
+    }
   }
   return {
-    postImage,
-    setPostImage,
     composer,
     setComposer,
+    postImage,
+    setPostImage,
     draft,
     setDraft,
     topic,
@@ -62,5 +73,6 @@ export function usePostComposer({
     anonymous,
     setAnonymous,
     publish,
+    postSaving,
   };
 }

@@ -471,3 +471,55 @@ td {
   color: var(--green);
   border-bottom-color: var(--green);
 }
+
+.api-panel {
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.api-list-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.api-list-row > span:first-child {
+  flex: 1;
+  min-width: 120px;
+}
+.api-list-row small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+.api-error {
+  color: #a83232;
+  padding: 12px 0;
+  font-size: 13px;
+}
+.referral-owner-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.notification-item {
+  display: flex;
+  text-align: left;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.notification-item small {
+  display: block;
+  font-size: 11px;
+  color: var(--green);
+}
+.notification-panel {
+  max-height: min(560px, 80dvh);
+  overflow-y: auto;
+}

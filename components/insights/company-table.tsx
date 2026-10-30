@@ -1,10 +1,9 @@
 "use client";
-import { workforceCompanies } from "@/data/workforce";
 import { usePlatform } from "@/providers/platform-provider";
-
 export default function CompanyTable() {
-  const { year } = usePlatform();
-
+  const { year, insights } = usePlatform();
+  const count = (value: number | null) =>
+    value === null ? "Unavailable" : Number(value).toLocaleString();
   return (
     <section className="card company-table">
       <h2>Company overview</h2>
@@ -20,24 +19,26 @@ export default function CompanyTable() {
             </tr>
           </thead>
           <tbody>
-            {workforceCompanies.map((company) => (
-              <tr key={company.name}>
+            {insights.companies.map((company) => (
+              <tr key={company.id}>
                 <td>{company.name}</td>
-                <td>{company.rolesAffected}</td>
-                <td>{company.headcount}</td>
-                <td>{company.hires}</td>
+                <td>{count(company.rolesAffected)}</td>
+                <td>{count(company.headcount)}</td>
+                <td>{count(company.hires)}</td>
                 <td>
-                  <span className="tag">Illustrative</span>
+                  <span className="tag">User reported</span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {!insights.companies.length && (
+        <p className="subtle-text">No workforce reports for {year}.</p>
+      )}
       <p className="subtle-text">
-        Source: fictional demo dataset · Period: {year} · Updated: October 29,
-        2026. Hires are independently listed, never inferred from workforce
-        changes. Coverage is limited to these three fictional companies.
+        Period: {year}. Reports may overlap. Headcount and hires are reported
+        figures, not inferred from workforce changes.
       </p>
     </section>
   );

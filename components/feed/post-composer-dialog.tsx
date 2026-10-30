@@ -1,4 +1,5 @@
 "use client";
+import { userInitials } from "@/providers/auth-provider";
 import Dialog from "@/components/ui/dialog";
 import { postTopics } from "@/config/feed";
 import CompanyAutocomplete from "@/components/ui/company-autocomplete";
@@ -8,6 +9,7 @@ import { ArrowRight, Earth, X } from "lucide-react";
 
 export default function PostComposerDialog() {
   const {
+    currentUser,
     composer,
     setComposer,
     draft,
@@ -19,6 +21,7 @@ export default function PostComposerDialog() {
     anonymous,
     setAnonymous,
     publish,
+    postSaving,
     postImage,
     setPostImage,
   } = usePlatform();
@@ -38,9 +41,17 @@ export default function PostComposerDialog() {
         </button>
       </div>
       <div className="composer-identity">
-        <Avatar initials={anonymous ? "AM" : "JM"} />
+        <Avatar
+          initials={
+            anonymous ? "AM" : userInitials(currentUser?.name ?? "Member")
+          }
+        />
         <span>
-          <strong>{anonymous ? "Anonymous member" : "Jamie Morgan"}</strong>
+          <strong>
+            {anonymous
+              ? "Anonymous member"
+              : (currentUser?.name ?? "Community member")}
+          </strong>
           <small>
             <Earth size={12} />
             Public · Visible across all companies
@@ -88,7 +99,11 @@ export default function PostComposerDialog() {
       </label>
       <div className="modal-bottom">
         <span>No company or topic required. Everyone’s welcome.</span>
-        <button className="primary" disabled={!draft.trim()} onClick={publish}>
+        <button
+          className="primary"
+          disabled={!draft.trim() || postSaving}
+          onClick={publish}
+        >
           Publish post <ArrowRight size={16} />
         </button>
       </div>

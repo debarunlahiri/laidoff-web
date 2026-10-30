@@ -2,6 +2,7 @@
 
 import NoteDialog from "@/components/community-notes/note-dialog";
 import PostComposerDialog from "@/components/feed/post-composer-dialog";
+import ReferralRequestsDialog from "@/components/referrals/referral-requests-dialog";
 import ReferralComposerDialog from "@/components/referrals/referral-composer-dialog";
 import PageHeading from "@/components/layout/page-heading";
 import RightRail from "@/components/layout/right-rail";
@@ -34,6 +35,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       </div>
       <PostComposerDialog />
       <ReferralComposerDialog />
+      <ReferralRequestsDialog />
       <NoteDialog />
       <Toast />
     </div>

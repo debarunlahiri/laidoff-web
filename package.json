@@ -6,14 +6,15 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write app components config data hooks providers styles types tsconfig.json package.json README.md",
-    "format:check": "prettier --check app components config data hooks providers styles types tsconfig.json package.json README.md"
+    "format": "prettier --write app components lib config data hooks providers styles types tsconfig.json package.json README.md",
+    "format:check": "prettier --check app components lib config data hooks providers styles types tsconfig.json package.json README.md"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "LayoffCircle — a professional community prototype with dummy data",
   "dependencies": {
+    "firebase": "12.5.0",
     "lucide-react": "^1.63.0",
     "next": "^16.4.3",
     "react": "^19.3.1",
@@ -26,5 +27,8 @@
     "prettier": "^3.9.10",
     "typescript": "^7.0.2"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6"
+  }
 }

@@ -1,12 +1,24 @@
 "use client";
 
+import { useAuth, userInitials } from "@/providers/auth-provider";
+import { googleSignInAvailable } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 import Avatar from "@/components/ui/avatar";
 import { usePlatform } from "@/providers/platform-provider";
-import { Bookmark, ChevronDown, CircleHelp, UserRound } from "lucide-react";
+import {
+  Bookmark,
+  ChevronDown,
+  CircleHelp,
+  UserRound,
+  LogOut,
+  Link as LinkIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 export default function AccountMenu() {
+  const { user, logout, linkGoogle } = useAuth();
+  const router = useRouter();
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const { notify, accountOpen: open, setAccountOpen: setOpen } = usePlatform();
@@ -47,9 +59,9 @@ export default function AccountMenu() {
         aria-label="Open your profile"
         onClick={() => setOpen(false)}
       >
-        <Avatar initials="JM" small />
+        <Avatar initials={userInitials(user?.name ?? "Member")} small />
         <span className="account-summary">
-          <strong>Jamie Morgan</strong>
+          <strong>{user?.name ?? "Your account"}</strong>
           <small>View your profile</small>
         </span>
       </Link>
@@ -68,7 +80,7 @@ export default function AccountMenu() {
       {open && (
         <div className="account-dropdown card" id="account-options">
           <div className="account-dropdown-heading">
-            <strong>Jamie Morgan</strong>
+            <strong>{user?.name ?? "Your account"}</strong>
             <span>Your account</span>
           </div>
           <Link href="/profile" onClick={() => setOpen(false)}>
@@ -77,10 +89,48 @@ export default function AccountMenu() {
           <Link href="/bookmarks" onClick={() => setOpen(false)}>
             <Bookmark size={18} /> Saved posts
           </Link>
+          {googleSignInAvailable && (
+            <button
+              onClick={async () => {
+                setOpen(false);
+                try {
+                  await linkGoogle();
+                  notify(
+                    "Google account linked. You can now sign in with Google.",
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : "Google could not be linked.",
+                  );
+                }
+              }}
+            >
+              <LinkIcon size={18} />
+              Link Google account
+            </button>
+          )}
+          <button
+            onClick={async () => {
+              setOpen(false);
+              try {
+                await logout();
+                router.replace("/login");
+              } catch {
+                notify("Could not sign out. Please try again.");
+              }
+            }}
+          >
+            <LogOut size={18} />
+            Sign out
+          </button>
           <button
             onClick={() => {
               setOpen(false);
-              notify("Need a hand? Contact hello@layoffcircle.example (demo).");
+              notify(
+                "Be respectful, protect personal information, and keep referrals free. Report posts that need review from their options menu.",
+              );
             }}
           >
             <CircleHelp size={18} /> Help & community guidelines

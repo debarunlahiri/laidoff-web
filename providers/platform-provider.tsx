@@ -1,5 +1,9 @@
 "use client";
 
+import { useApiResource } from "@/hooks/use-api-resource";
+import { useNotifications } from "@/hooks/use-notifications";
+import type { ApiCompany } from "@/lib/api-types";
+import { useAuth } from "@/providers/auth-provider";
 import { useCommunityNotes } from "@/hooks/use-community-notes";
 import { useReferrals } from "@/hooks/use-referrals";
 import { useFeed } from "@/hooks/use-feed";
@@ -13,30 +17,40 @@ import { useWorkforceInsights } from "@/hooks/use-workforce-insights";
 import { createContext, useContext, type ReactNode } from "react";
 
 function usePlatformState() {
+  const { user } = useAuth();
   const navigation = usePlatformNavigation();
   const notifications = useToast();
-  const referrals = useReferrals(notifications.notify);
-  const network = useNetwork(notifications.notify);
+  const referrals = useReferrals(
+    notifications.notify,
+    navigation.section === "Referrals" ? navigation.search : "",
+  );
+  const network = useNetwork(notifications.notify, user?.id ?? "");
   const feed = useFeed(
     navigation.section,
     navigation.search,
-    network.following,
+    notifications.notify,
   );
   const composer = usePostComposer({
-    setPosts: feed.setPosts,
     setTab: feed.setTab,
     navigate: navigation.navigate,
     notify: notifications.notify,
   });
-  const communityNotes = useCommunityNotes({
-    setPosts: feed.setPosts,
-    notify: notifications.notify,
-  });
-  const messages = useMessages();
-  const workforceInsights = useWorkforceInsights();
+  const communityNotes = useCommunityNotes({ notify: notifications.notify });
+  const messages = useMessages(
+    navigation.section,
+    user?.id ?? "",
+    notifications.notify,
+    navigation.navigate,
+  );
+  const workforceInsights = useWorkforceInsights(navigation.section);
+  const alerts = useNotifications(notifications.notify);
+  const companies = useApiResource<ApiCompany[]>("/companies?limit=100", []);
   const ui = useInterface();
 
   return {
+    currentUser: user,
+    companies: companies.data,
+    ...alerts,
     ...navigation,
     ...network,
     ...referrals,

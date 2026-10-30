@@ -26,6 +26,13 @@ export default function Topbar() {
     mobileNav,
     setMobileNav,
     navigate,
+    notificationItems,
+    notificationCount,
+    notificationsLoading,
+    notificationsError,
+    notificationsHasMore,
+    loadMoreNotifications,
+    markNotificationRead,
   } = usePlatform();
 
   const notificationTrigger = useRef<HTMLButtonElement>(null);
@@ -95,7 +102,6 @@ export default function Topbar() {
         />
       </label>
       <div className="header-actions">
-        <span className="demo-label">Demo workspace</span>
         <button
           ref={notificationTrigger}
           className="notification-button icon-button"
@@ -105,7 +111,7 @@ export default function Topbar() {
           onClick={() => setNotifications(!notifications)}
         >
           <Bell size={20} />
-          <i />
+          {notificationCount > 0 && <i />}
         </button>
         <span className="header-divider" />
         <AccountMenu />
@@ -131,23 +137,56 @@ export default function Topbar() {
               <X size={18} />
             </button>
           </div>
-          <p>
-            <UserPlus size={18} />
-            Emily Wilson sent you a connection request.
-          </p>
-          <p>
-            <ThumbsUp size={18} />
-            Sarah liked your recent post.
-          </p>
-          <button
-            className="text-button"
-            onClick={() => {
-              navigate("My network");
-              setNotifications(false);
-            }}
-          >
-            View your network <ArrowRight size={14} />
-          </button>
+          {notificationsLoading && <p role="status">Loading notifications…</p>}
+          {notificationsError && <p role="alert">{notificationsError}</p>}
+          {!notificationsLoading && !notificationItems.length && (
+            <p>You’re all caught up.</p>
+          )}
+          {notificationItems.map((item) => (
+            <button
+              className="notification-item"
+              key={item.id}
+              onClick={() => {
+                void markNotificationRead(item.id);
+                setNotifications(false);
+                navigate(
+                  item.type === "message"
+                    ? "Messages"
+                    : item.type.startsWith("referral")
+                      ? "Referrals"
+                      : item.type.startsWith("connection")
+                        ? "My network"
+                        : "Home",
+                );
+              }}
+            >
+              {item.type === "like" ? (
+                <ThumbsUp size={18} />
+              ) : (
+                <Bell size={18} />
+              )}
+              <span>
+                {item.text}
+                {!item.readAt && <small>Unread</small>}
+              </span>
+            </button>
+          ))}
+          {notificationsHasMore && (
+            <button
+              className="text-button"
+              onClick={() => void loadMoreNotifications()}
+            >
+              Load more
+            </button>
+          )}
+          {notificationCount > 0 && (
+            <button
+              className="text-button"
+              onClick={() => void markNotificationRead()}
+            >
+              Mark all as read
+            </button>
+          )}
         </div>
       )}
     </header>

@@ -1,5 +1,6 @@
 "use client";
 
+import { userInitials } from "@/providers/auth-provider";
 import CompanyAutocomplete from "@/components/ui/company-autocomplete";
 import Avatar from "@/components/ui/avatar";
 import { postTopics } from "@/config/feed";
@@ -9,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 export default function ComposerTrigger() {
   const {
+    currentUser,
     draft,
     setDraft,
     topic,
@@ -18,6 +20,7 @@ export default function ComposerTrigger() {
     anonymous,
     setAnonymous,
     publish,
+    postSaving,
     postImage,
     setPostImage,
     notify,
@@ -41,14 +44,20 @@ export default function ComposerTrigger() {
       aria-label="Create a post"
     >
       <div>
-        <Avatar initials={anonymous ? "AM" : "JM"} />
+        <Avatar
+          initials={
+            anonymous ? "AM" : userInitials(currentUser?.name ?? "Member")
+          }
+        />
         {expanded ? (
           <span className="inline-composer-name">
-            {anonymous ? "Anonymous member" : "Jamie Morgan"}
+            {anonymous
+              ? "Anonymous member"
+              : (currentUser?.name ?? "Community member")}
           </span>
         ) : (
           <button aria-expanded={expanded} onClick={() => expand()}>
-            What’s on your mind, Jamie?
+            What’s on your mind?
           </button>
         )}
         <span className="public-label">
@@ -59,17 +68,16 @@ export default function ComposerTrigger() {
       {expanded && (
         <form
           className="inline-composer-form"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             if (!draft.trim()) return;
-            publish();
-            setExpanded(false);
+            if (await publish()) setExpanded(false);
           }}
         >
           <textarea
             ref={textarea}
             aria-label="Post text"
-            placeholder="What’s on your mind, Jamie?"
+            placeholder="What’s on your mind?"
             value={draft}
             onChange={(event) => {
               setDraft(event.target.value);
@@ -122,7 +130,10 @@ export default function ComposerTrigger() {
               >
                 Collapse
               </button>
-              <button className="primary" disabled={!draft.trim()}>
+              <button
+                className="primary"
+                disabled={!draft.trim() || postSaving}
+              >
                 Post
               </button>
             </div>

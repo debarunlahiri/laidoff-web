@@ -1,24 +1,23 @@
-"use client";
-import { usePlatform } from "@/providers/platform-provider";
 import { ShieldCheck } from "lucide-react";
-
-export default function CommunityNote({ note }: { note: string }) {
-  const { notify } = usePlatform();
-
+export default function CommunityNote({
+  note,
+  source,
+}: {
+  note: string;
+  source?: string;
+}) {
   return (
     <div className="community-note">
       <strong>
-        <ShieldCheck size={16} /> Community context{" "}
-        <span>Under evaluation</span>
+        <ShieldCheck size={16} />
+        Community context <span>Reviewed</span>
       </strong>
       <p>{note}</p>
-      <button
-        onClick={() =>
-          notify("Your helpful rating has been recorded for this demo.")
-        }
-      >
-        Was this helpful?
-      </button>
+      {source && /^https?:\/\//.test(source) && (
+        <a href={source} target="_blank" rel="noopener noreferrer">
+          View supporting source
+        </a>
+      )}
     </div>
   );
 }

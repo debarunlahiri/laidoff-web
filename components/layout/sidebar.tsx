@@ -5,7 +5,8 @@ import { usePlatform } from "@/providers/platform-provider";
 import { Plus, Users } from "lucide-react";
 
 export default function Sidebar() {
-  const { section, setComposer, mobileNav, navigate } = usePlatform();
+  const { section, setComposer, mobileNav, navigate, unreadMessageCount } =
+    usePlatform();
 
   return (
     <aside className={`sidebar ${mobileNav ? "mobile-open" : ""}`}>
@@ -28,7 +29,9 @@ export default function Sidebar() {
           >
             <Icon size={20} strokeWidth={1.8} />
             <span>{label}</span>
-            {label === "Messages" && <span className="nav-count">2</span>}
+            {label === "Messages" && unreadMessageCount > 0 && (
+              <span className="nav-count">{unreadMessageCount}</span>
+            )}
           </button>
         ))}
       </nav>

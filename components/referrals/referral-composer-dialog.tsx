@@ -7,7 +7,13 @@ import { BriefcaseBusiness, X } from "lucide-react";
 import { useState } from "react";
 
 export default function ReferralComposerDialog() {
-  const { referralComposer, setReferralComposer, addReferral } = usePlatform();
+  const {
+    currentUser,
+    referralComposer,
+    setReferralComposer,
+    addReferral,
+    referralSaving,
+  } = usePlatform();
   const [company, setCompany] = useState("");
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
@@ -40,9 +46,11 @@ export default function ReferralComposerDialog() {
       </p>
       <form
         className="referral-create-form"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          if (addReferral({ company, title, location, skills, description })) {
+          if (
+            await addReferral({ company, title, location, skills, description })
+          ) {
             setCompany("");
             setTitle("");
             setLocation("");
@@ -92,8 +100,10 @@ export default function ReferralComposerDialog() {
           />
         </label>
         <div className="modal-bottom">
-          <span>Offered by Jamie Morgan · Referrals are always free.</span>
-          <button className="primary" disabled={!valid}>
+          <span>
+            Offered by {currentUser?.name ?? "you"} · Referrals are always free.
+          </span>
+          <button className="primary" disabled={!valid || referralSaving}>
             <BriefcaseBusiness size={16} />
             Add referral
           </button>

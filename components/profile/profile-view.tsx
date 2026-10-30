@@ -1,32 +1,40 @@
+"use client";
+import { useAuth, userInitials } from "@/providers/auth-provider";
 import Avatar from "@/components/ui/avatar";
 import { BriefcaseBusiness, Sparkles } from "lucide-react";
 
 export default function ProfileView() {
+  const { user } = useAuth();
   return (
     <article className="profile-page card">
       <div className="profile-cover" />
       <div className="profile-page-content">
         <div className="profile-identity">
-          <Avatar initials="JM" />
-          <span className="tag green-tag">
-            <BriefcaseBusiness size={15} /> Open to work
-          </span>
+          <Avatar initials={userInitials(user?.name ?? "Member")} />
+          {user?.openToWork && (
+            <span className="tag green-tag">
+              <BriefcaseBusiness size={15} /> Open to work
+            </span>
+          )}
         </div>
-        <h2>Jamie Morgan</h2>
-        <p className="profile-role">Product Designer</p>
+        <h2>{user?.name}</h2>
+        <p className="profile-role">{user?.role || user?.email}</p>
         <section className="profile-section">
           <h3>About</h3>
-          <p>
-            Designing thoughtful digital experiences. Interested in product
-            design, creative teams, and meaningful connections.
-          </p>
+          <p>{user?.about || "Your next chapter starts here."}</p>
         </section>
         <section className="profile-section">
           <h3>Skills</h3>
           <div className="profile-skills">
-            <span className="tag">Product design</span>
-            <span className="tag">Figma</span>
-            <span className="tag">Design systems</span>
+            {user?.skills?.length ? (
+              user.skills.map((skill) => (
+                <span key={skill} className="tag">
+                  {skill}
+                </span>
+              ))
+            ) : (
+              <span className="subtle-text">No skills added yet.</span>
+            )}
           </div>
         </section>
         <section className="profile-section">
@@ -34,7 +42,8 @@ export default function ProfileView() {
             <Sparkles size={18} /> My next chapter
           </h3>
           <p>
-            Looking for my next chapter in product design with a creative team.
+            {user?.nextChapter ||
+              "Connect with your circle and discover opportunities."}
           </p>
         </section>
       </div>

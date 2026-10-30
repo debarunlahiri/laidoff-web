@@ -32,7 +32,6 @@ export default function PostCard({ post }: { post: Post }) {
     saved,
     reposted,
     following,
-    comments,
     commentPost,
     navigate,
     toggleFollow,
@@ -44,7 +43,13 @@ export default function PostCard({ post }: { post: Post }) {
     openNoteDialog,
     hidePost,
     notify,
+    postPending,
   } = usePlatform();
+
+  const isFollowing = Boolean(
+    post.following || (post.authorId && following.includes(post.authorId)),
+  );
+  const isPending = postPending.includes(post.id);
 
   return (
     <article className="post card" key={post.id}>
@@ -57,17 +62,19 @@ export default function PostCard({ post }: { post: Post }) {
             {post.time} <span>·</span> <Earth size={12} />
           </span>
         </div>
-        <button
-          className={`follow-button ${following.includes(post.name) ? "is-following" : ""}`}
-          onClick={() => toggleFollow(post.name)}
-        >
-          {following.includes(post.name) ? (
-            <Check size={14} />
-          ) : (
-            <Plus size={14} />
-          )}
-          {following.includes(post.name) ? "Following" : "Follow"}
-        </button>
+        {post.authorId && !post.own && (
+          <>
+            <button
+              className={`follow-button ${isFollowing ? "is-following" : ""}`}
+              onClick={() =>
+                post.authorId && toggleFollow(post.authorId, isFollowing)
+              }
+            >
+              {isFollowing ? <Check size={14} /> : <Plus size={14} />}
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          </>
+        )}
         <Popover label="Post options" icon={<Ellipsis size={20} />}>
           {(close) => (
             <>
@@ -80,16 +87,19 @@ export default function PostCard({ post }: { post: Post }) {
                 <Bookmark size={16} />
                 {saved.includes(post.id) ? "Remove bookmark" : "Save post"}
               </button>
-              <button
-                onClick={() => {
-                  toggleFollow(post.name);
-                  close();
-                }}
-              >
-                <UserPlus size={16} />
-                {following.includes(post.name) ? "Unfollow" : "Follow"}{" "}
-                {post.name}
-              </button>
+              {post.authorId && !post.own && (
+                <>
+                  <button
+                    onClick={() => {
+                      post.authorId && toggleFollow(post.authorId, isFollowing);
+                      close();
+                    }}
+                  >
+                    <UserPlus size={16} />
+                    {isFollowing ? "Unfollow" : "Follow"} {post.name}
+                  </button>
+                </>
+              )}
               <button
                 onClick={async () => {
                   close();
@@ -119,9 +129,6 @@ export default function PostCard({ post }: { post: Post }) {
                 onClick={() => {
                   close();
                   hidePost(post.id);
-                  notify(
-                    "Post hidden. Restore hidden posts from the feed preferences.",
-                  );
                 }}
               >
                 <EyeOff size={16} />
@@ -163,29 +170,31 @@ export default function PostCard({ post }: { post: Post }) {
           className="referral-inline"
           onClick={() => navigate("Referrals")}
         >
-          <span className="company-logo purple">O</span>
+          <BriefcaseBusiness size={22} />
           <span>
             <strong>A little help for your next chapter</strong>
-            <small>3 open roles at Orbit · Referrals available</small>
+            <small>
+              {post.company ? `${post.company} · ` : ""}Explore referral
+              opportunities
+            </small>
           </span>
           <ArrowUpRight size={19} />
         </button>
       )}
-      {post.note && <CommunityNote note={post.note} />}
+      {post.note && <CommunityNote note={post.note} source={post.noteSource} />}
       <div className="post-stats">
         <span>
           <ThumbsUp size={13} />
-          {post.likes + Number(liked.includes(post.id))} likes ·{" "}
-          {Number(disliked.includes(post.id))} dislikes
+          {post.likes} likes · {post.dislikes ?? 0} dislikes
         </span>
         <span>
-          {post.comments + (comments[post.id]?.length || 0)} comments ·{" "}
-          {post.reposts + Number(reposted.includes(post.id))} reposts
+          {post.comments} comments · {post.reposts} reposts
         </span>
       </div>
       <div className="post-actions">
         <button
           className={liked.includes(post.id) ? "active-action" : ""}
+          disabled={isPending}
           aria-pressed={liked.includes(post.id)}
           onClick={() => toggleLike(post.id)}
         >
@@ -197,6 +206,7 @@ export default function PostCard({ post }: { post: Post }) {
         </button>
         <button
           className={disliked.includes(post.id) ? "active-action" : ""}
+          disabled={isPending}
           aria-pressed={disliked.includes(post.id)}
           onClick={() => toggleDislike(post.id)}
         >
@@ -206,7 +216,7 @@ export default function PostCard({ post }: { post: Post }) {
           />
           Dislike
         </button>
-        <button onClick={() => toggleComments(post.id)}>
+        <button disabled={isPending} onClick={() => toggleComments(post.id)}>
           <MessageCircle size={18} />
           Comment
         </button>
@@ -219,6 +229,7 @@ export default function PostCard({ post }: { post: Post }) {
         </button>
         <button
           className={saved.includes(post.id) ? "active-action" : ""}
+          disabled={isPending}
           aria-label="Bookmark post"
           onClick={() => toggleBookmark(post.id)}
         >

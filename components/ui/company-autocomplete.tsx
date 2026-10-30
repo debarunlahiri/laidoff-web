@@ -1,6 +1,8 @@
 "use client";
 
-import { companies } from "@/config/companies";
+import { useApiResource, useDebouncedValue } from "@/hooks/use-api-resource";
+import { queryPath } from "@/lib/api";
+import type { ApiCompany } from "@/lib/api-types";
 import { Check, ChevronDown, X } from "lucide-react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 
@@ -24,9 +26,16 @@ export default function CompanyAutocomplete({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(-1);
-  const options = companies.filter((company) =>
-    company.toLowerCase().includes(query.trim().toLowerCase()),
+  const search = useDebouncedValue(query);
+  const result = useApiResource<ApiCompany[]>(
+    open ? queryPath("/companies", { search, limit: 50 }) : null,
+    [],
   );
+  const selection = useApiResource<ApiCompany | null>(
+    value ? `/companies/${value}` : null,
+    null,
+  );
+  const options = result.data;
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -69,8 +78,8 @@ export default function CompanyAutocomplete({
     };
   }, [open]);
 
-  function select(company: string) {
-    onChange(company);
+  function select(company: ApiCompany) {
+    onChange(company.id);
     setOpen(false);
     setActive(-1);
   }
@@ -103,7 +112,7 @@ export default function CompanyAutocomplete({
           }
           autoComplete="off"
           placeholder="Search and select a company"
-          value={open ? query : value}
+          value={open ? query : (selection.data?.name ?? "")}
           onFocus={() => {
             setQuery("");
             setActive(-1);
@@ -141,7 +150,7 @@ export default function CompanyAutocomplete({
                 options[active] ??
                 options.find(
                   (option) =>
-                    option.toLowerCase() === query.trim().toLowerCase(),
+                    option.name.toLowerCase() === query.trim().toLowerCase(),
                 );
               if (match) select(match);
             } else if (event.key === "Escape" && open) {
@@ -187,10 +196,10 @@ export default function CompanyAutocomplete({
         >
           {options.map((company, index) => (
             <div
-              key={company}
+              key={company.id}
               id={`${id}-option-${index}`}
               role="option"
-              aria-selected={value === company}
+              aria-selected={value === company.id}
               className={active === index ? "highlighted" : ""}
               onPointerDown={(event) => event.preventDefault()}
               onClick={() => select(company)}
@@ -199,11 +208,13 @@ export default function CompanyAutocomplete({
                   element?.scrollIntoView({ block: "nearest" });
               }}
             >
-              <span>{company}</span>
-              {value === company && <Check size={15} />}
+              <span>{company.name}</span>
+              {value === company.id && <Check size={15} />}
             </div>
           ))}
-          {!options.length && (
+          {result.loading && <p role="status">Searching companies…</p>}
+          {result.error && <p role="alert">{result.error}</p>}
+          {!result.loading && !result.error && !options.length && (
             <p role="status">No companies found. Try another search.</p>
           )}
         </div>

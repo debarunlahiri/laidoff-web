@@ -14,6 +14,7 @@ export default function NoteDialog() {
     proposeNote,
     reportPost,
     canProposeNote,
+    noteSaving,
   } = usePlatform();
 
   if (notePost === null) return null;
@@ -49,12 +50,16 @@ export default function NoteDialog() {
         />
       </label>
       <div className="modal-bottom">
-        <button className="text-button" onClick={reportPost}>
+        <button
+          className="text-button"
+          disabled={noteSaving}
+          onClick={reportPost}
+        >
           Report this post
         </button>
         <button
           className="primary"
-          disabled={!canProposeNote}
+          disabled={!canProposeNote || noteSaving}
           onClick={proposeNote}
         >
           Propose note

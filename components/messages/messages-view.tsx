@@ -19,6 +19,14 @@ export default function MessagesView() {
     message,
     setMessage,
     sendMessage,
+    messageSending,
+    messagesLoading,
+    messagesError,
+    conversationsHasMore,
+    loadMoreConversations,
+    messagesHasMore,
+    loadOlderMessages,
+    navigate,
   } = usePlatform();
   const [query, setQuery] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
@@ -32,7 +40,7 @@ export default function MessagesView() {
   useEffect(() => {
     const history = historyRef.current;
     if (history) history.scrollTop = history.scrollHeight;
-  }, [activeConversation.id, activeConversation.messages.length, chatOpen]);
+  }, [activeConversation?.id, activeConversation?.messages.length, chatOpen]);
 
   return (
     <section
@@ -55,13 +63,11 @@ export default function MessagesView() {
         </label>
         <div className="conversation-list">
           {filteredConversations.map((conversation) => {
-            const latest =
-              conversation.messages[conversation.messages.length - 1];
             return (
               <button
                 key={conversation.id}
-                className={`conversation-preview${activeConversation.id === conversation.id ? " active" : ""}`}
-                aria-pressed={activeConversation.id === conversation.id}
+                className={`conversation-preview${activeConversation?.id === conversation.id ? " active" : ""}`}
+                aria-pressed={activeConversation?.id === conversation.id}
                 onClick={() => {
                   selectConversation(conversation.id);
                   setChatOpen(true);
@@ -74,11 +80,10 @@ export default function MessagesView() {
                 <span className="conversation-summary">
                   <span className="conversation-preview-heading">
                     <strong>{conversation.name}</strong>
-                    <time>{latest.time}</time>
+                    <time>{conversation.time}</time>
                   </span>
                   <span className="conversation-snippet">
-                    {latest.outgoing ? "You: " : ""}
-                    {latest.text}
+                    {conversation.preview}
                   </span>
                 </span>
                 {conversation.unread > 0 && (
@@ -92,7 +97,21 @@ export default function MessagesView() {
               </button>
             );
           })}
-          {filteredConversations.length === 0 && (
+          {messagesError && (
+            <p role="alert" className="api-error">
+              {messagesError}
+            </p>
+          )}
+          {conversationsHasMore && (
+            <button
+              className="text-button"
+              disabled={messagesLoading}
+              onClick={() => void loadMoreConversations()}
+            >
+              Load more conversations
+            </button>
+          )}
+          {!messagesLoading && filteredConversations.length === 0 && (
             <p className="inbox-empty">
               <MessageSquare size={24} />
               No conversations found.
@@ -101,75 +120,101 @@ export default function MessagesView() {
         </div>
         <p className="inbox-note">A little connection goes a long way.</p>
       </aside>
-      <div className="chat-window">
-        <div className="conversation-heading">
-          <button
-            className="icon-button inbox-back"
-            aria-label="Back to inbox"
-            onClick={() => setChatOpen(false)}
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <Avatar
-            initials={activeConversation.initials}
-            color={activeConversation.color}
-          />
-          <span>
-            <strong>{activeConversation.name}</strong>
-            <small>{activeConversation.role}</small>
-          </span>
-          <span className="chat-connected">Connected</span>
-        </div>
-        <div
-          className="message-history"
-          ref={historyRef}
-          role="log"
-          aria-label={`Conversation with ${activeConversation.name}`}
-          aria-live="polite"
-          tabIndex={0}
-        >
-          <span className="message-date">Today</span>
-          {activeConversation.messages.map((item) => (
-            <div
-              className={`message ${item.outgoing ? "outgoing" : "incoming"}`}
-              key={item.id}
-            >
-              <p>{item.text}</p>
-              <small>
-                <time>{item.time}</time>
-                {item.outgoing && <CheckCheck size={14} aria-label="Sent" />}
-              </small>
-            </div>
-          ))}
-        </div>
-        <div className="chat-composer">
-          <form
-            className="message-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              sendMessage();
-            }}
-          >
-            <input
-              aria-label={`Message ${activeConversation.name}`}
-              placeholder="Write a message…"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              autoComplete="off"
-            />
+      {activeConversation ? (
+        <div className="chat-window">
+          <div className="conversation-heading">
             <button
-              className="primary"
-              aria-label="Send message"
-              disabled={!message.trim()}
+              className="icon-button inbox-back"
+              aria-label="Back to inbox"
+              onClick={() => setChatOpen(false)}
             >
-              <Send size={18} />
+              <ArrowLeft size={20} />
             </button>
-          </form>
-          <p className="subtle-text">
-            Demo conversation. Messages are not sent to a real person.
-          </p>
+            <Avatar
+              initials={activeConversation.initials}
+              color={activeConversation.color}
+            />
+            <span>
+              <strong>{activeConversation.name}</strong>
+              <small>{activeConversation.role}</small>
+            </span>
+          </div>
+          <div
+            className="message-history"
+            ref={historyRef}
+            role="log"
+            aria-label={`Conversation with ${activeConversation.name}`}
+            aria-live="polite"
+            tabIndex={0}
+          >
+            {messagesHasMore && (
+              <button
+                className="text-button"
+                disabled={messagesLoading}
+                onClick={() => void loadOlderMessages()}
+              >
+                Load earlier messages
+              </button>
+            )}
+            {messagesLoading && <p role="status">Loading messages…</p>}
+            {activeConversation.messages.map((item) => (
+              <div
+                className={`message ${item.outgoing ? "outgoing" : "incoming"}`}
+                key={item.id}
+              >
+                <p>{item.text}</p>
+                <small>
+                  <time>
+                    {item.date} · {item.time}
+                  </time>
+                  {item.outgoing && (
+                    <CheckCheck
+                      size={14}
+                      aria-label={item.readAt ? "Read" : "Sent"}
+                    />
+                  )}
+                </small>
+              </div>
+            ))}
+          </div>
+          <div className="chat-composer">
+            <form
+              className="message-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                sendMessage();
+              }}
+            >
+              <input
+                aria-label={`Message ${activeConversation.name}`}
+                placeholder="Write a message…"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                autoComplete="off"
+              />
+              <button
+                className="primary"
+                aria-label="Send message"
+                disabled={!message.trim() || messageSending}
+              >
+                <Send size={18} />
+              </button>
+            </form>
+            <p className="subtle-text">
+              Messages are shared with this conversation’s participant.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="chat-window inbox-empty">
+          <MessageSquare size={32} />
+          <h3>{messagesLoading ? "Loading inbox…" : "Start a conversation"}</h3>
+          <p>Choose someone from your network to send a message.</p>
+          <button className="primary" onClick={() => navigate("My network")}>
+            Find people
+          </button>
+        </div>
+      )}
     </section>
   );
 }

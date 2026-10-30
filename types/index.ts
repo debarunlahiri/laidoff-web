@@ -1,5 +1,11 @@
 export type Post = {
-  id: number;
+  id: string;
+  authorId?: string | null;
+  own?: boolean;
+  dislikes?: number;
+  reaction?: "like" | "dislike" | null;
+  saved?: boolean;
+  reposted?: boolean;
   name: string;
   role: string;
   avatar: string;
@@ -15,9 +21,11 @@ export type Post = {
   following?: boolean;
   open?: boolean;
   note?: string;
+  noteSource?: string;
   referral?: boolean;
 };
 export type Person = {
+  id?: string;
   name: string;
   role: string;
   initials: string;
@@ -26,6 +34,10 @@ export type Person = {
 };
 export type ReferralOpportunity = {
   id?: string;
+  authorId?: string;
+  companyId?: string;
+  status?: "open" | "closed";
+  requestStatus?: string | null;
   own?: boolean;
   description?: string;
   company: string;

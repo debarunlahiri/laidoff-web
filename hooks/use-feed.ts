@@ -1,138 +1,200 @@
 "use client";
-import { initialPosts } from "@/data/posts";
 import { useState } from "react";
-export function useFeed(section: string, search: string, following: string[]) {
+import {
+  api,
+  apiMessage,
+  displayDate,
+  displayTime,
+  initials,
+  invalidate,
+  mediaUrl,
+  queryPath,
+} from "@/lib/api";
+import type { ApiComment, ApiPost } from "@/lib/api-types";
+import type { Post } from "@/types";
+import {
+  useApiList,
+  useApiResource,
+  useDebouncedValue,
+} from "./use-api-resource";
+
+export function useFeed(
+  section: string,
+  search: string,
+  notify: (message: string) => void,
+) {
   const [tab, setTab] = useState("For you");
-  const [posts, setPosts] = useState(initialPosts);
-  const [liked, setLiked] = useState<number[]>([]);
-  const [disliked, setDisliked] = useState<number[]>([]);
-  const [saved, setSaved] = useState<number[]>([]);
-  const [reposted, setReposted] = useState<number[]>([]);
-  const [comments, setComments] = useState<Record<number, string[]>>({});
-  const [commentPost, setCommentPost] = useState<number | null>(null);
-  const [comment, setComment] = useState("");
   const [feedTopic, setFeedTopic] = useState("");
+  const [exploreTopic, setExploreTopic] = useState("All");
   const [feedCompany, setFeedCompany] = useState("");
   const [feedSort, setFeedSort] = useState("Latest");
-  const [hiddenPosts, setHiddenPosts] = useState<number[]>([]);
-  const visiblePosts = posts.filter((post) => !hiddenPosts.includes(post.id));
-  const filteredPosts = visiblePosts
-    .filter(
-      (p) =>
-        (section !== "Bookmarks" || saved.includes(p.id)) &&
-        (tab !== "Following" || p.following || following.includes(p.name)) &&
-        (tab !== "Layoff updates" || p.topic === "Layoff updates") &&
-        (tab !== "Referrals" || p.referral) &&
-        (!feedTopic || p.topic === feedTopic) &&
-        (!feedCompany || p.company === feedCompany) &&
-        `${p.name} ${p.text} ${p.company} ${p.topic}`
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-    )
-    .sort((a, b) => {
-      if (feedSort === "Most liked" && tab !== "Latest") {
-        return (
-          b.likes +
-          Number(liked.includes(b.id)) -
-          (a.likes + Number(liked.includes(a.id)))
-        );
-      }
-      return posts.indexOf(a) - posts.indexOf(b);
-    });
-
+  const [commentPost, setCommentPost] = useState<string | null>(null);
+  const [comment, setComment] = useState("");
+  const [pending, setPending] = useState<string[]>([]);
+  const debouncedSearch = useDebouncedValue(search);
+  const enabled = ["Home", "Explore", "Bookmarks"].includes(section);
+  const list = useApiList<ApiPost>(
+    enabled
+      ? queryPath("/posts", {
+          search: debouncedSearch,
+          topic:
+            section === "Explore"
+              ? exploreTopic === "All"
+                ? undefined
+                : exploreTopic
+              : tab === "Layoff updates"
+                ? "Layoff updates"
+                : feedTopic,
+          companyId: section === "Explore" ? undefined : feedCompany,
+          tab:
+            section === "Bookmarks"
+              ? "bookmarks"
+              : section === "Explore"
+                ? "all"
+                : tab === "Following"
+                  ? "following"
+                  : tab === "Referrals"
+                    ? "referrals"
+                    : "all",
+          sort:
+            tab === "Latest"
+              ? "latest"
+              : feedSort === "Most liked"
+                ? "most-liked"
+                : "latest",
+        })
+      : null,
+  );
+  const hidden = useApiResource<ApiPost[]>(
+    enabled ? "/posts?tab=hidden&limit=100" : null,
+    [],
+  );
+  const commentList = useApiList<ApiComment>(
+    commentPost ? `/posts/${commentPost}/comments` : null,
+  );
+  const posts: Post[] = list.data.map((post) => ({
+    ...post,
+    avatar: initials(post.name),
+    color: post.anonymous ? "lavender" : "blue",
+    time: `${displayDate(post.createdAt)} · ${displayTime(post.createdAt)}`,
+    following: Boolean(post.following),
+    open: Boolean(post.openToWork),
+    own: Boolean(post.own),
+    image: mediaUrl(post.image),
+    saved: Boolean(post.saved),
+    reposted: Boolean(post.reposted),
+    referral: post.topic === "Offering referrals",
+    dislikes: Number(post.dislikes),
+    likes: Number(post.likes),
+    comments: Number(post.comments),
+    reposts: Number(post.reposts),
+  }));
+  const liked = posts
+    .filter((post) => post.reaction === "like")
+    .map((post) => post.id);
+  const disliked = posts
+    .filter((post) => post.reaction === "dislike")
+    .map((post) => post.id);
+  const saved = posts.filter((post) => post.saved).map((post) => post.id);
+  const reposted = posts.filter((post) => post.reposted).map((post) => post.id);
+  async function mutate(id: string, action: () => Promise<unknown>) {
+    if (pending.includes(id)) return;
+    setPending((current) => [...current, id]);
+    try {
+      await action();
+      invalidate("posts");
+    } catch (error) {
+      notify(apiMessage(error));
+    } finally {
+      setPending((current) => current.filter((item) => item !== id));
+    }
+  }
+  const react = (id: string, reaction: "like" | "dislike") =>
+    mutate(id, () =>
+      api(`/posts/${id}/reaction`, {
+        method:
+          posts.find((post) => post.id === id)?.reaction === reaction
+            ? "DELETE"
+            : "PUT",
+        body: { reaction },
+      }),
+    );
   function resetFeedFilters() {
     setFeedTopic("");
     setFeedCompany("");
     setFeedSort("Latest");
   }
-
-  function hidePost(postId: number) {
-    setHiddenPosts((current) => [...new Set([...current, postId])]);
+  async function restoreHiddenPosts() {
+    try {
+      await api("/posts/hidden/all", { method: "DELETE" });
+      invalidate("posts");
+    } catch (error) {
+      notify(apiMessage(error));
+    }
   }
-
-  function toggleLike(postId: number) {
-    setDisliked((current) => current.filter((id) => id !== postId));
-    setLiked((current) =>
-      current.includes(postId)
-        ? current.filter((id) => id !== postId)
-        : [...current, postId],
-    );
-  }
-
-  function toggleDislike(postId: number) {
-    setLiked((current) => current.filter((id) => id !== postId));
-    setDisliked((current) =>
-      current.includes(postId)
-        ? current.filter((id) => id !== postId)
-        : [...current, postId],
-    );
-  }
-
-  function toggleBookmark(postId: number) {
-    setSaved((current) =>
-      current.includes(postId)
-        ? current.filter((id) => id !== postId)
-        : [...current, postId],
-    );
-  }
-
-  function toggleRepost(postId: number) {
-    setReposted((current) =>
-      current.includes(postId)
-        ? current.filter((id) => id !== postId)
-        : [...current, postId],
-    );
-  }
-
-  function toggleComments(postId: number) {
-    setCommentPost((current) => (current === postId ? null : postId));
-  }
-
-  function addComment(postId: number) {
+  async function addComment(id: string) {
+    if (!comment.trim()) return;
     const text = comment.trim();
-    if (!text) return;
-    setComments((current) => ({
-      ...current,
-      [postId]: [...(current[postId] || []), text],
-    }));
-    setComment("");
+    await mutate(id, async () => {
+      await api(`/posts/${id}/comments`, { method: "POST", body: { text } });
+      setComment("");
+    });
   }
-
   return {
+    tab,
+    setTab,
     feedTopic,
     setFeedTopic,
+    exploreTopic,
+    setExploreTopic,
     feedCompany,
     setFeedCompany,
     feedSort,
     setFeedSort,
-    hiddenPosts,
-    setHiddenPosts,
-    hidePost,
-    visiblePosts,
-    resetFeedFilters,
-    toggleLike,
-    toggleDislike,
-    toggleBookmark,
-    toggleRepost,
-    toggleComments,
-    addComment,
-    tab,
-    setTab,
     posts,
-    setPosts,
+    visiblePosts: posts,
+    filteredPosts: posts,
     liked,
     disliked,
-    setLiked,
     saved,
-    setSaved,
     reposted,
-    setReposted,
-    comments,
-    setComments,
+    hiddenPosts: hidden.data.map((post) => post.id),
+    restoreHiddenPosts,
+    resetFeedFilters,
     commentPost,
     setCommentPost,
     comment,
     setComment,
-    filteredPosts,
+    comments: commentPost ? { [commentPost]: commentList.data } : {},
+    commentsLoading: commentList.loading,
+    commentsError: commentList.error,
+    commentsHasMore: commentList.hasMore,
+    loadMoreComments: commentList.loadMore,
+    toggleLike: (id: string) => react(id, "like"),
+    toggleDislike: (id: string) => react(id, "dislike"),
+    toggleBookmark: (id: string) =>
+      mutate(id, () =>
+        api(`/posts/${id}/bookmark`, {
+          method: saved.includes(id) ? "DELETE" : "PUT",
+        }),
+      ),
+    toggleRepost: (id: string) =>
+      mutate(id, () =>
+        api(`/posts/${id}/repost`, {
+          method: reposted.includes(id) ? "DELETE" : "PUT",
+        }),
+      ),
+    hidePost: (id: string) =>
+      mutate(id, () => api(`/posts/${id}/hide`, { method: "PUT" })),
+    toggleComments: (id: string) => {
+      setCommentPost((current) => (current === id ? null : id));
+      setComment("");
+    },
+    addComment,
+    feedLoading: list.loading,
+    feedError: list.error,
+    feedHasMore: list.hasMore,
+    loadMorePosts: list.loadMore,
+    postPending: pending,
   };
 }
