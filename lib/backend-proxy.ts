@@ -11,6 +11,9 @@ const roots = new Set([
   "notifications",
   "uploads",
   "network",
+  "daily-reminder",
+  "search",
+  "ws-ticket",
 ]);
 const backendBase = () =>
   (process.env.BACKEND_API_URL ?? "http://127.0.0.1:9090/api/v1").replace(
@@ -31,7 +34,7 @@ export async function proxyBackend(
   const publicRead =
     request.method === "GET" &&
     (media ||
-      /^(posts(?:\/topics|\/[a-zA-Z0-9-]+\/comments)?|referrals|companies(?:\/[a-zA-Z0-9-]+)?|users(?:\/[a-zA-Z0-9-]+)?|insights(?:\/[-a-zA-Z0-9_]+)*)$/.test(
+      /^(daily-reminder|search|posts(?:\/topics|\/topic-options|\/[a-zA-Z0-9-]+\/comments)?|referrals|companies(?:\/[a-zA-Z0-9-]+)?|users(?:\/[a-zA-Z0-9-]+(?:\/stats)?)?|insights(?:\/[-a-zA-Z0-9_]+)*)$/.test(
         segments.join("/"),
       ));
   if (!token && !publicRead) return errorResponse("Please sign in", 401);
@@ -60,6 +63,9 @@ export async function proxyBackend(
     if (contentType) headers.set("Content-Type", contentType);
     const agent = request.headers.get("user-agent");
     if (agent) headers.set("User-Agent", agent);
+    // Chat attachments (3 files of up to 5 MB) need more room than other writes.
+    const maxBody =
+      segments[0] === "conversations" ? 17 * 1024 * 1024 : 6 * 1024 * 1024;
     let body: Uint8Array | undefined;
     if (mutation) {
       const reader = request.body?.getReader();
@@ -70,7 +76,7 @@ export async function proxyBackend(
           const { value, done } = await reader.read();
           if (done) break;
           length += value.byteLength;
-          if (length > 6 * 1024 * 1024) {
+          if (length > maxBody) {
             await reader.cancel();
             return errorResponse("Request too large", 413);
           }
@@ -86,7 +92,12 @@ export async function proxyBackend(
       signal: AbortSignal.timeout(20000),
     });
     const responseHeaders = new Headers({ "Cache-Control": "no-store" });
-    for (const name of ["content-type", "x-request-id", "retry-after"]) {
+    for (const name of [
+      "content-type",
+      "content-disposition",
+      "x-request-id",
+      "retry-after",
+    ]) {
       const value = upstream.headers.get(name);
       if (value) responseHeaders.set(name, value);
     }

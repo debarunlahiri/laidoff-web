@@ -1,16 +1,23 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, apiMessage } from "@/lib/api";
+// Ignore superseded requests without aborting fetch during React effect cleanup.
+type PendingRequest = { cancelled: boolean };
+
+function cancelRequest(request: PendingRequest | null) {
+  if (request) request.cancelled = true;
+}
+
 export function useApiResource<T>(path: string | null, initial: T, pollMs = 0) {
   const [resolvedPath, setResolvedPath] = useState<string | null>(null);
   const initialRef = useRef(initial);
   const [data, setData] = useState(initial);
   const [loading, setLoading] = useState(Boolean(path));
   const [error, setError] = useState("");
-  const controller = useRef<AbortController | null>(null);
+  const controller = useRef<PendingRequest | null>(null);
   const reload = useCallback(async () => {
-    controller.current?.abort();
-    const active = new AbortController();
+    cancelRequest(controller.current);
+    const active: PendingRequest = { cancelled: false };
     controller.current = active;
     if (!path) {
       setData(initialRef.current);
@@ -21,21 +28,21 @@ export function useApiResource<T>(path: string | null, initial: T, pollMs = 0) {
     setLoading(true);
     setError("");
     try {
-      const result = await api<T>(path, { signal: active.signal });
-      if (!active.signal.aborted) {
+      const result = await api<T>(path);
+      if (!active.cancelled) {
         setData(result);
         setResolvedPath(path);
       }
     } catch (error) {
-      if (!active.signal.aborted) setError(apiMessage(error));
+      if (!active.cancelled) setError(apiMessage(error));
     } finally {
-      if (!active.signal.aborted) setLoading(false);
+      if (!active.cancelled) setLoading(false);
     }
   }, [path]);
   useEffect(() => {
     setData(initialRef.current);
     void reload();
-    return () => controller.current?.abort();
+    return () => cancelRequest(controller.current);
   }, [reload]);
   useEffect(() => {
     const change = (event: Event) => {
@@ -76,7 +83,7 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
   const [loading, setLoading] = useState(Boolean(path));
   const [error, setError] = useState("");
   const [hasMore, setHasMore] = useState(false);
-  const active = useRef<AbortController | null>(null);
+  const active = useRef<PendingRequest | null>(null);
   const rows = useRef<T[]>([]);
   const busy = useRef(false);
   const pageSize = 50;
@@ -91,8 +98,8 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
         setError("");
         return;
       }
-      active.current?.abort();
-      const controller = new AbortController();
+      cancelRequest(active.current);
+      const controller: PendingRequest = { cancelled: false };
       active.current = controller;
       busy.current = true;
       setLoading(true);
@@ -101,9 +108,8 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
       try {
         const result = await api<T[]>(
           `${path}${path.includes("?") ? "&" : "?"}limit=${pageSize}&offset=${offset}`,
-          { signal: controller.signal },
         );
-        if (!controller.signal.aborted) {
+        if (!controller.cancelled) {
           const identifiers = new Set(result.map((item) => itemKey(item)));
           rows.current = more
             ? [
@@ -128,9 +134,9 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
           setHasMore(result.length === pageSize);
         }
       } catch (error) {
-        if (!controller.signal.aborted) setError(apiMessage(error));
+        if (!controller.cancelled) setError(apiMessage(error));
       } finally {
-        if (!controller.signal.aborted) {
+        if (!controller.cancelled) {
           setLoading(false);
           busy.current = false;
         }
@@ -143,7 +149,7 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
     setData([]);
     setHasMore(false);
     void load();
-    return () => active.current?.abort();
+    return () => cancelRequest(active.current);
   }, [load]);
   useEffect(() => {
     const change = (event: Event) => {

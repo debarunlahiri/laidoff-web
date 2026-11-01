@@ -7,13 +7,12 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading, sessionError, refreshSession } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const publicPage = [
-    "/",
-    "/explore",
-    "/referrals",
-    "/network",
-    "/insights",
-  ].includes(pathname);
+  const publicPage =
+    ["/", "/explore", "/referrals", "/network", "/insights"].includes(
+      pathname,
+    ) ||
+    pathname.startsWith("/users/") ||
+    pathname.startsWith("/search");
   useEffect(() => {
     if (!publicPage && !loading && !user && !sessionError)
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);

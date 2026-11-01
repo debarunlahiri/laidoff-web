@@ -1,5 +1,13 @@
+import type {
+  ApiPoll,
+  ReferralFeedback,
+  ReferralField,
+  ReferralLevel,
+  ReferralWorkMode,
+} from "@/lib/api-types";
 export type Post = {
   id: string;
+  poll?: ApiPoll | null;
   authorId?: string | null;
   own?: boolean;
   dislikes?: number;
@@ -9,15 +17,19 @@ export type Post = {
   name: string;
   role: string;
   avatar: string;
+  avatarUrl?: string | null;
   color: string;
   time: string;
   topic: string;
   company: string;
   text: string;
   image?: string;
+  images?: string[];
   likes: number;
   comments: number;
   reposts: number;
+  shares?: number;
+  views?: number;
   following?: boolean;
   open?: boolean;
   note?: string;
@@ -29,6 +41,7 @@ export type Person = {
   name: string;
   role: string;
   initials: string;
+  imageUrl?: string | null;
   color: string;
   detail: string;
 };
@@ -40,6 +53,20 @@ export type ReferralOpportunity = {
   requestStatus?: string | null;
   own?: boolean;
   description?: string;
+  createdAt?: string;
+  workMode?: ReferralWorkMode;
+  level?: ReferralLevel | null;
+  minExperience?: number | null;
+  requestFields: ReferralField[];
+  personRole?: string | null;
+  personImageUrl?: string | null;
+  myFeedback: ReferralFeedback | null;
+  requestCount: number;
+  helpfulCount: number;
+  shares: number;
+  notHelpfulCount: number;
+  authorVotes: number;
+  authorHelpful: number;
   company: string;
   letter: string;
   title: string;

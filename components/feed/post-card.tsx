@@ -1,8 +1,14 @@
 "use client";
+import PollView from "@/components/feed/poll-view";
+import PostImages from "@/components/feed/post-images";
 import CommunityNote from "@/components/community-notes/community-note";
 import PostComments from "@/components/feed/post-comments";
+import PostStats from "@/components/feed/post-stats";
+import Link from "next/link";
+import { api, invalidate } from "@/lib/api";
 import Popover from "@/components/ui/popover";
 import Avatar from "@/components/ui/avatar";
+import UserLink from "@/components/ui/user-link";
 import { usePlatform } from "@/providers/platform-provider";
 import type { Post } from "@/types";
 import {
@@ -15,6 +21,8 @@ import {
   Ellipsis,
   Copy,
   EyeOff,
+  Flag,
+  Trash2,
   FileText,
   UserPlus,
   ThumbsUp,
@@ -23,14 +31,21 @@ import {
   MessageCircle,
   Plus,
   Repeat2,
+  Share2,
 } from "lucide-react";
 
-export default function PostCard({ post }: { post: Post }) {
+const clampChars = 420;
+const clampLines = 8;
+
+// full: render the whole text (post page) instead of a clamped preview.
+export default function PostCard({
+  post,
+  full = false,
+}: {
+  post: Post;
+  full?: boolean;
+}) {
   const {
-    liked,
-    disliked,
-    saved,
-    reposted,
     following,
     commentPost,
     navigate,
@@ -42,6 +57,8 @@ export default function PostCard({ post }: { post: Post }) {
     toggleComments,
     openNoteDialog,
     hidePost,
+    deletePost,
+    openReportDialog,
     notify,
     postPending,
   } = usePlatform();
@@ -50,18 +67,50 @@ export default function PostCard({ post }: { post: Post }) {
     post.following || (post.authorId && following.includes(post.authorId)),
   );
   const isPending = postPending.includes(post.id);
+  const clamped =
+    !full &&
+    (post.text.length > clampChars ||
+      post.text.split("\n").length > clampLines);
+
+  // Native share sheet where available, otherwise copy the link.
+  async function share() {
+    const url = `${window.location.origin}/posts/${post.id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: post.name, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        notify("Post link copied.");
+      }
+    } catch (error) {
+      if ((error as Error).name === "AbortError") return;
+      notify("Could not share. Copy the link from the address bar.");
+      return;
+    }
+    try {
+      await api(`/posts/${post.id}/share`, { method: "PUT" });
+      invalidate("posts");
+    } catch {
+      // Counting is best effort; the link was already shared.
+    }
+  }
 
   return (
     <article className="post card" key={post.id}>
       <div className="post-heading">
-        <Avatar initials={post.avatar} color={post.color} />
-        <div className="author">
-          <strong>{post.name}</strong>
-          <span>{post.role}</span>
-          <span className="post-time">
-            {post.time} <span>·</span> <Earth size={12} />
-          </span>
-        </div>
+        <UserLink id={post.authorId}>
+          <Avatar
+            initials={post.avatar}
+            color={post.color}
+            src={post.avatarUrl}
+          />
+          <div className="author">
+            <strong>{post.name}</strong>
+            <span>{post.role}</span>
+            <span className="post-time">
+              {post.time} <span>·</span> <Earth size={12} />
+            </span>
+          </div>
+        </UserLink>
         {post.authorId && !post.own && (
           <>
             <button
@@ -80,12 +129,12 @@ export default function PostCard({ post }: { post: Post }) {
             <>
               <button
                 onClick={() => {
-                  toggleBookmark(post.id);
+                  toggleBookmark(post.id, Boolean(post.saved));
                   close();
                 }}
               >
                 <Bookmark size={16} />
-                {saved.includes(post.id) ? "Remove bookmark" : "Save post"}
+                {post.saved ? "Remove bookmark" : "Save post"}
               </button>
               {post.authorId && !post.own && (
                 <>
@@ -134,6 +183,29 @@ export default function PostCard({ post }: { post: Post }) {
                 <EyeOff size={16} />
                 Hide post
               </button>
+              {!post.own && (
+                <button
+                  onClick={() => {
+                    close();
+                    openReportDialog(post.id);
+                  }}
+                >
+                  <Flag size={16} />
+                  Report post
+                </button>
+              )}
+              {post.own && (
+                <button
+                  onClick={() => {
+                    close();
+                    if (window.confirm("Delete this post permanently?"))
+                      void deletePost(post.id);
+                  }}
+                >
+                  <Trash2 size={16} />
+                  Delete post
+                </button>
+              )}
             </>
           )}
         </Popover>
@@ -157,14 +229,24 @@ export default function PostCard({ post }: { post: Post }) {
         )}
         {post.open && <span className="open-tag">Open to work</span>}
       </div>
-      <p className="post-copy">{post.text}</p>
-      {post.image && (
-        <img
-          className="post-image"
-          src={post.image}
-          alt={`Photo shared by ${post.name}`}
+      {post.text && (
+        <p className={`post-copy${clamped ? " is-clamped" : ""}`}>
+          {post.text}
+        </p>
+      )}
+      {clamped && (
+        <Link className="read-more" href={`/posts/${post.id}`}>
+          Read more
+        </Link>
+      )}
+      {post.poll && (
+        <PollView
+          postId={post.id}
+          initial={post.poll}
+          own={Boolean(post.own)}
         />
       )}
+      <PostImages images={post.images ?? []} author={post.name} />
       {post.referral && (
         <button
           className="referral-inline"
@@ -182,64 +264,66 @@ export default function PostCard({ post }: { post: Post }) {
         </button>
       )}
       {post.note && <CommunityNote note={post.note} source={post.noteSource} />}
-      <div className="post-stats">
-        <span>
-          <ThumbsUp size={13} />
-          {post.likes} likes · {post.dislikes ?? 0} dislikes
-        </span>
-        <span>
-          {post.comments} comments · {post.reposts} reposts
-        </span>
-      </div>
+      <PostStats post={post} />
       <div className="post-actions">
         <button
-          className={liked.includes(post.id) ? "active-action" : ""}
+          className={post.reaction === "like" ? "active-action" : ""}
           disabled={isPending}
-          aria-pressed={liked.includes(post.id)}
-          onClick={() => toggleLike(post.id)}
+          aria-pressed={post.reaction === "like"}
+          onClick={() => toggleLike(post.id, post.reaction ?? null)}
         >
           <ThumbsUp
             size={18}
-            fill={liked.includes(post.id) ? "currentColor" : "none"}
+            fill={post.reaction === "like" ? "currentColor" : "none"}
           />
           Like
         </button>
         <button
-          className={disliked.includes(post.id) ? "active-action" : ""}
+          className={post.reaction === "dislike" ? "active-action" : ""}
           disabled={isPending}
-          aria-pressed={disliked.includes(post.id)}
-          onClick={() => toggleDislike(post.id)}
+          aria-pressed={post.reaction === "dislike"}
+          onClick={() => toggleDislike(post.id, post.reaction ?? null)}
         >
           <ThumbsDown
             size={18}
-            fill={disliked.includes(post.id) ? "currentColor" : "none"}
+            fill={post.reaction === "dislike" ? "currentColor" : "none"}
           />
           Dislike
         </button>
-        <button disabled={isPending} onClick={() => toggleComments(post.id)}>
+        <button
+          disabled={isPending}
+          onClick={() =>
+            full
+              ? document.getElementById("post-comments")?.scrollIntoView({
+                  behavior: "smooth",
+                })
+              : toggleComments(post.id)
+          }
+        >
           <MessageCircle size={18} />
           Comment
         </button>
         <button
-          className={reposted.includes(post.id) ? "active-action" : ""}
-          onClick={() => toggleRepost(post.id)}
+          className={post.reposted ? "active-action" : ""}
+          onClick={() => toggleRepost(post.id, Boolean(post.reposted))}
         >
           <Repeat2 size={18} />
           Repost
         </button>
+        <button onClick={() => void share()}>
+          <Share2 size={18} />
+          Share
+        </button>
         <button
-          className={saved.includes(post.id) ? "active-action" : ""}
+          className={post.saved ? "active-action" : ""}
           disabled={isPending}
           aria-label="Bookmark post"
-          onClick={() => toggleBookmark(post.id)}
+          onClick={() => toggleBookmark(post.id, Boolean(post.saved))}
         >
-          <Bookmark
-            size={18}
-            fill={saved.includes(post.id) ? "currentColor" : "none"}
-          />
+          <Bookmark size={18} fill={post.saved ? "currentColor" : "none"} />
         </button>
       </div>
-      {commentPost === post.id && <PostComments post={post} />}
+      {!full && commentPost === post.id && <PostComments post={post} />}
     </article>
   );
 }

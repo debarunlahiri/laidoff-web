@@ -1,11 +1,21 @@
 "use client";
 
 import { userInitials } from "@/providers/auth-provider";
+import {
+  AddPhotosLabel,
+  PhotoGrid,
+  usePhotoPicker,
+} from "@/components/feed/composer-photos";
+import { maxPostImages, readImageFile } from "@/lib/image-file";
+import SelectField from "@/components/ui/select-field";
 import CompanyAutocomplete from "@/components/ui/company-autocomplete";
 import Avatar from "@/components/ui/avatar";
-import { postTopics } from "@/config/feed";
+import { pastedImages } from "@/lib/paste-files";
 import { usePlatform } from "@/providers/platform-provider";
-import { Earth, ImagePlus, X } from "lucide-react";
+import { useImageDrop } from "@/hooks/use-image-drop";
+import { apiMessage, requireSignIn } from "@/lib/api";
+import PollBuilder from "@/components/feed/poll-builder";
+import { BarChart3, Earth, ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export default function ComposerTrigger() {
@@ -21,13 +31,36 @@ export default function ComposerTrigger() {
     setAnonymous,
     publish,
     postSaving,
-    postImage,
-    setPostImage,
+    postImages,
+    addPostImages,
+    removePostImage,
+    canPublish,
     notify,
+    postTopics,
+    pollOpen,
+    setPollOpen,
   } = usePlatform();
   const [expanded, setExpanded] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+
+  const { dragging, dropProps } = useImageDrop({
+    onImages: (dataUrls) => {
+      addPostImages(dataUrls);
+      setExpanded(true);
+    },
+    onError: notify,
+    canDrop: () => {
+      if (currentUser) return true;
+      requireSignIn();
+      return false;
+    },
+  });
+
+  const picker = usePhotoPicker({
+    onAdd: addPostImages,
+    onError: notify,
+    onPicked: () => setExpanded(true),
+  });
 
   useEffect(() => {
     if (expanded) textarea.current?.focus();
@@ -46,14 +79,22 @@ export default function ComposerTrigger() {
 
   return (
     <section
-      className={`composer card${expanded ? " composer-expanded" : ""}`}
+      className={`composer card${expanded ? " composer-expanded" : ""}${dragging ? " drop-active" : ""}`}
       aria-label="Create a post"
+      {...dropProps}
     >
+      {dragging && (
+        <div className="drop-overlay" aria-hidden="true">
+          <ImagePlus size={26} />
+          Drop photos to attach them
+        </div>
+      )}
       <div>
         <Avatar
           initials={
             anonymous ? "AM" : userInitials(currentUser?.name ?? "Member")
           }
+          src={anonymous ? null : currentUser?.profileImageUrl}
         />
         {expanded ? (
           <span className="inline-composer-name">
@@ -76,7 +117,7 @@ export default function ComposerTrigger() {
           className="inline-composer-form"
           onSubmit={async (event) => {
             event.preventDefault();
-            if (!draft.trim()) return;
+            if (!canPublish) return;
             if (await publish()) setExpanded(false);
           }}
         >
@@ -85,38 +126,39 @@ export default function ComposerTrigger() {
             aria-label="Post text"
             placeholder="What’s on your mind?"
             value={draft}
+            onPaste={async (event) => {
+              const pasted = pastedImages(event);
+              if (!pasted.length) return;
+              const results = await Promise.allSettled(
+                pasted.map((f) => readImageFile(f)),
+              );
+              const good = results.flatMap((r) =>
+                r.status === "fulfilled" ? [r.value] : [],
+              );
+              const failed = results.find((r) => r.status === "rejected");
+              if (failed)
+                notify(apiMessage((failed as PromiseRejectedResult).reason));
+              if (good.length) addPostImages(good);
+            }}
             onChange={(event) => {
               setDraft(event.target.value);
               event.target.style.height = "auto";
               event.target.style.height = `${event.target.scrollHeight}px`;
             }}
           />
-          {postImage && (
-            <div className="composer-image-preview">
-              <img src={postImage} alt="Selected post attachment" />
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Remove photo"
-                onClick={() => setPostImage("")}
-              >
-                <X size={18} />
-              </button>
-            </div>
-          )}
+          <PhotoGrid images={postImages} onRemove={removePostImage} />
+          {pollOpen && <PollBuilder />}
           <div className="form-row">
-            <label>
-              Topic (optional)
-              <select
-                value={topic}
-                onChange={(event) => setTopic(event.target.value)}
-              >
-                <option value="">No topic</option>
-                {postTopics.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
+            <SelectField
+              label="Topic (optional)"
+              placeholder="No topic"
+              value={topic}
+              options={[
+                { value: "", label: "No topic" },
+                ...postTopics.map((item) => ({ value: item, label: item })),
+              ]}
+              onChange={setTopic}
+            />
             <CompanyAutocomplete value={company} onChange={setCompany} />
           </div>
           <div className="inline-composer-bottom">
@@ -136,53 +178,33 @@ export default function ComposerTrigger() {
               >
                 Collapse
               </button>
-              <button
-                className="primary"
-                disabled={!draft.trim() || postSaving}
-              >
+              <button className="primary" disabled={!canPublish || postSaving}>
                 Post
               </button>
             </div>
           </div>
         </form>
       )}
-      <input
-        ref={fileInput}
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
-        hidden
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          event.target.value = "";
-          if (!file) return;
-          if (
-            !["image/png", "image/jpeg", "image/webp", "image/gif"].includes(
-              file.type,
-            ) ||
-            file.size > 5 * 1024 * 1024
-          ) {
-            notify("Choose a PNG, JPEG, WebP, or GIF under 5 MB.");
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = () => {
-            setPostImage(String(reader.result));
-            expand();
-          };
-          reader.onerror = () =>
-            notify("Could not read this photo. Try another image.");
-          reader.readAsDataURL(file);
-        }}
-      />
+      {picker.input}
       <div className="composer-tools">
         <button
+          disabled={expanded && postImages.length >= maxPostImages}
           onClick={() => {
             expand();
-            if (currentUser) fileInput.current?.click();
+            if (currentUser) picker.open();
           }}
         >
-          <ImagePlus size={17} />
-          <span>Add photos</span>
+          <AddPhotosLabel count={postImages.length} />
+        </button>
+        <button
+          type="button"
+          aria-pressed={pollOpen}
+          onClick={() => {
+            expand();
+            if (currentUser) setPollOpen(!pollOpen);
+          }}
+        >
+          <BarChart3 size={16} /> {pollOpen ? "Remove poll" : "Add poll"}
         </button>
       </div>
     </section>

@@ -1,5 +1,4 @@
 "use client";
-import { postTopics } from "@/config/feed";
 import Popover from "@/components/ui/popover";
 import { feedTabs } from "@/config/feed";
 import PostCard from "@/components/feed/post-card";
@@ -34,6 +33,7 @@ export default function FeedView() {
     hiddenPosts,
     restoreHiddenPosts,
     setSearch,
+    postTopics,
   } = usePlatform();
 
   return (

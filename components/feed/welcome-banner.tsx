@@ -31,11 +31,6 @@ export default function WelcomeBanner() {
         <div className="welcome-community-icon">
           <Users size={28} />
         </div>
-        <div className="avatar-stack">
-          <span className="avatar peach">SC</span>
-          <span className="avatar blue">MJ</span>
-          <span className="avatar lavender">AP</span>
-        </div>
         <strong>A shared way forward.</strong>
         <span>One conversation at a time.</span>
       </div>

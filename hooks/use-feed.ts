@@ -1,17 +1,9 @@
 "use client";
 import { useAuth } from "@/providers/auth-provider";
 import { useState } from "react";
-import {
-  api,
-  apiMessage,
-  displayDate,
-  displayTime,
-  initials,
-  invalidate,
-  mediaUrl,
-  queryPath,
-} from "@/lib/api";
+import { api, apiMessage, invalidate, queryPath } from "@/lib/api";
 import type { ApiComment, ApiPost } from "@/lib/api-types";
+import { toPost } from "@/lib/post-mapper";
 import type { Post } from "@/types";
 import {
   useApiList,
@@ -31,7 +23,6 @@ export function useFeed(
   const [feedCompany, setFeedCompany] = useState("");
   const [feedSort, setFeedSort] = useState("Latest");
   const [commentPost, setCommentPost] = useState<string | null>(null);
-  const [comment, setComment] = useState("");
   const [pending, setPending] = useState<string[]>([]);
   const debouncedSearch = useDebouncedValue(search);
   const enabled = ["Home", "Explore", "Bookmarks"].includes(section);
@@ -74,23 +65,7 @@ export function useFeed(
   const commentList = useApiList<ApiComment>(
     commentPost ? `/posts/${commentPost}/comments` : null,
   );
-  const posts: Post[] = list.data.map((post) => ({
-    ...post,
-    avatar: initials(post.name),
-    color: post.anonymous ? "lavender" : "blue",
-    time: `${displayDate(post.createdAt)} · ${displayTime(post.createdAt)}`,
-    following: Boolean(post.following),
-    open: Boolean(post.openToWork),
-    own: Boolean(post.own),
-    image: mediaUrl(post.image),
-    saved: Boolean(post.saved),
-    reposted: Boolean(post.reposted),
-    referral: post.topic === "Offering referrals",
-    dislikes: Number(post.dislikes),
-    likes: Number(post.likes),
-    comments: Number(post.comments),
-    reposts: Number(post.reposts),
-  }));
+  const posts: Post[] = list.data.map(toPost);
   const liked = posts
     .filter((post) => post.reaction === "like")
     .map((post) => post.id);
@@ -111,13 +86,16 @@ export function useFeed(
       setPending((current) => current.filter((item) => item !== id));
     }
   }
-  const react = (id: string, reaction: "like" | "dislike") =>
+  // The caller passes the post's own current state: a post can be rendered from
+  // any list (profile, search), not just the feed this hook loaded.
+  const react = (
+    id: string,
+    reaction: "like" | "dislike",
+    current: "like" | "dislike" | null,
+  ) =>
     mutate(id, () =>
       api(`/posts/${id}/reaction`, {
-        method:
-          posts.find((post) => post.id === id)?.reaction === reaction
-            ? "DELETE"
-            : "PUT",
+        method: current === reaction ? "DELETE" : "PUT",
         body: { reaction },
       }),
     );
@@ -133,14 +111,6 @@ export function useFeed(
     } catch (error) {
       notify(apiMessage(error));
     }
-  }
-  async function addComment(id: string) {
-    if (!comment.trim()) return;
-    const text = comment.trim();
-    await mutate(id, async () => {
-      await api(`/posts/${id}/comments`, { method: "POST", body: { text } });
-      setComment("");
-    });
   }
   return {
     tab,
@@ -165,34 +135,37 @@ export function useFeed(
     resetFeedFilters,
     commentPost,
     setCommentPost,
-    comment,
-    setComment,
     comments: commentPost ? { [commentPost]: commentList.data } : {},
     commentsLoading: commentList.loading,
     commentsError: commentList.error,
     commentsHasMore: commentList.hasMore,
     loadMoreComments: commentList.loadMore,
-    toggleLike: (id: string) => react(id, "like"),
-    toggleDislike: (id: string) => react(id, "dislike"),
-    toggleBookmark: (id: string) =>
+    toggleLike: (id: string, current: "like" | "dislike" | null) =>
+      react(id, "like", current),
+    toggleDislike: (id: string, current: "like" | "dislike" | null) =>
+      react(id, "dislike", current),
+    toggleBookmark: (id: string, isSaved: boolean) =>
       mutate(id, () =>
         api(`/posts/${id}/bookmark`, {
-          method: saved.includes(id) ? "DELETE" : "PUT",
+          method: isSaved ? "DELETE" : "PUT",
         }),
       ),
-    toggleRepost: (id: string) =>
+    toggleRepost: (id: string, isReposted: boolean) =>
       mutate(id, () =>
         api(`/posts/${id}/repost`, {
-          method: reposted.includes(id) ? "DELETE" : "PUT",
+          method: isReposted ? "DELETE" : "PUT",
         }),
       ),
     hidePost: (id: string) =>
       mutate(id, () => api(`/posts/${id}/hide`, { method: "PUT" })),
+    deletePost: (id: string) =>
+      mutate(id, async () => {
+        await api(`/posts/${id}`, { method: "DELETE" });
+        notify("Post deleted.");
+      }),
     toggleComments: (id: string) => {
       setCommentPost((current) => (current === id ? null : id));
-      setComment("");
     },
-    addComment,
     feedLoading: list.loading,
     feedError: list.error,
     feedHasMore: list.hasMore,

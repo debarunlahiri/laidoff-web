@@ -1,11 +1,23 @@
 "use client";
+import {
+  AddPhotosLabel,
+  PhotoGrid,
+  usePhotoPicker,
+} from "@/components/feed/composer-photos";
+import { maxPostImages } from "@/lib/image-file";
+import SelectField from "@/components/ui/select-field";
 import { userInitials } from "@/providers/auth-provider";
 import Dialog from "@/components/ui/dialog";
-import { postTopics } from "@/config/feed";
 import CompanyAutocomplete from "@/components/ui/company-autocomplete";
 import Avatar from "@/components/ui/avatar";
+import { pastedImages } from "@/lib/paste-files";
+import { readImageFile } from "@/lib/image-file";
+import { apiMessage } from "@/lib/api";
 import { usePlatform } from "@/providers/platform-provider";
-import { ArrowRight, Earth, X } from "lucide-react";
+import { useImageDrop } from "@/hooks/use-image-drop";
+import { requireSignIn } from "@/lib/api";
+import PollBuilder from "@/components/feed/poll-builder";
+import { ArrowRight, BarChart3, Earth, ImagePlus, X } from "lucide-react";
 
 export default function PostComposerDialog() {
   const {
@@ -22,14 +34,42 @@ export default function PostComposerDialog() {
     setAnonymous,
     publish,
     postSaving,
-    postImage,
-    setPostImage,
+    postImages,
+    addPostImages,
+    removePostImage,
+    canPublish,
+    pollOpen,
+    setPollOpen,
+    postTopics,
+    notify,
   } = usePlatform();
+  const { dragging, dropProps } = useImageDrop({
+    onImages: addPostImages,
+    onError: notify,
+    canDrop: () => {
+      if (currentUser) return true;
+      requireSignIn();
+      return false;
+    },
+  });
+
+  const picker = usePhotoPicker({ onAdd: addPostImages, onError: notify });
 
   if (!composer) return null;
 
   return (
-    <Dialog label="Create a public post" onClose={() => setComposer(false)}>
+    <Dialog
+      label="Create a public post"
+      onClose={() => setComposer(false)}
+      className={dragging ? "drop-active" : ""}
+      sectionProps={dropProps}
+    >
+      {dragging && (
+        <div className="drop-overlay" aria-hidden="true">
+          <ImagePlus size={26} />
+          Drop photos to attach them
+        </div>
+      )}
       <div className="modal-heading">
         <h2>Share with your circle</h2>
         <button
@@ -45,6 +85,7 @@ export default function PostComposerDialog() {
           initials={
             anonymous ? "AM" : userInitials(currentUser?.name ?? "Member")
           }
+          src={anonymous ? null : currentUser?.profileImageUrl}
         />
         <span>
           <strong>
@@ -60,33 +101,58 @@ export default function PostComposerDialog() {
       </div>
       <textarea
         autoFocus
-        placeholder="Your story, a question, a little encouragement…"
+        placeholder={
+          pollOpen
+            ? "Ask your question…"
+            : "Your story, a question, a little encouragement…"
+        }
         value={draft}
+        onPaste={async (event) => {
+          const pasted = pastedImages(event);
+          if (!pasted.length) return;
+          const results = await Promise.allSettled(
+            pasted.map((f) => readImageFile(f)),
+          );
+          const good = results.flatMap((r) =>
+            r.status === "fulfilled" ? [r.value] : [],
+          );
+          const failed = results.find((r) => r.status === "rejected");
+          if (failed)
+            notify(apiMessage((failed as PromiseRejectedResult).reason));
+          if (good.length) addPostImages(good);
+        }}
         onChange={(e) => setDraft(e.target.value)}
       />
-      {postImage && (
-        <div className="composer-image-preview">
-          <img src={postImage} alt="Selected post attachment" />
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Remove photo"
-            onClick={() => setPostImage("")}
-          >
-            <X size={18} />
-          </button>
-        </div>
-      )}
+      <PhotoGrid images={postImages} onRemove={removePostImage} />
+      {picker.input}
+      <button
+        type="button"
+        className="text-button"
+        disabled={postImages.length >= maxPostImages}
+        onClick={picker.open}
+      >
+        <AddPhotosLabel count={postImages.length} />
+      </button>
+      <button
+        type="button"
+        className="text-button"
+        aria-pressed={pollOpen}
+        onClick={() => setPollOpen(!pollOpen)}
+      >
+        <BarChart3 size={16} /> {pollOpen ? "Remove poll" : "Add poll"}
+      </button>
+      {pollOpen && <PollBuilder />}
       <div className="form-row">
-        <label>
-          Topic (optional)
-          <select value={topic} onChange={(e) => setTopic(e.target.value)}>
-            <option value="">No topic</option>
-            {postTopics.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Topic (optional)"
+          placeholder="No topic"
+          value={topic}
+          options={[
+            { value: "", label: "No topic" },
+            ...postTopics.map((t) => ({ value: t, label: t })),
+          ]}
+          onChange={setTopic}
+        />
         <CompanyAutocomplete value={company} onChange={setCompany} />
       </div>
       <label className="checkbox-label">
@@ -101,7 +167,7 @@ export default function PostComposerDialog() {
         <span>No company or topic required. Everyone’s welcome.</span>
         <button
           className="primary"
-          disabled={!draft.trim() || postSaving}
+          disabled={!canPublish || postSaving}
           onClick={publish}
         >
           Publish post <ArrowRight size={16} />

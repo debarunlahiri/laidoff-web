@@ -1,9 +1,19 @@
 "use client";
 
+import BrandLogo from "@/components/ui/brand-logo";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Eye, EyeOff, LoaderCircle, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  TriangleAlert,
+  Users,
+  Wifi,
+} from "lucide-react";
+import { connectionMessages, useConnection } from "@/hooks/use-connection";
 import { useAuth } from "@/providers/auth-provider";
 import { googleSignInAvailable } from "@/lib/firebase";
 import { sectionPaths } from "@/config/navigation";
@@ -32,6 +42,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState<"email" | "google" | null>(null);
   const [error, setError] = useState("");
+  const connection = useConnection();
   const router = useRouter();
   const params = useSearchParams();
   const requestedPath = params.get("next") ?? "/";
@@ -41,9 +52,22 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   useEffect(() => {
     if (!loading && user) router.replace(destination);
   }, [user, loading, destination, router]);
+  // Confirms internet and server are reachable before any sign-in attempt.
+  async function connected() {
+    const result = await connection.check();
+    if (result === "offline" || result === "server-down") {
+      setError(connectionMessages[result]);
+      return false;
+    }
+    return true;
+  }
   async function submitGoogle() {
     setBusy("google");
     setError("");
+    if (!(await connected())) {
+      setBusy(null);
+      return;
+    }
     try {
       await loginGoogle();
       router.replace(destination);
@@ -56,10 +80,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   return (
     <div className="auth-page">
       <aside className="auth-story">
-        <Link className="auth-brand" href="/login">
-          <Users size={29} />
-          LayoffCircle<span>.</span>
-        </Link>
+        <BrandLogo href="/login" />
         <div>
           <span className="auth-eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
           <h1>
@@ -79,6 +100,17 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
       </aside>
       <main className="auth-main">
         <div className="auth-form-card">
+          {(connection.status === "offline" ||
+            connection.status === "server-down") && (
+            <p className="auth-connection" role="alert">
+              {connection.status === "offline" ? (
+                <Wifi size={18} />
+              ) : (
+                <TriangleAlert size={18} />
+              )}
+              {connectionMessages[connection.status]}
+            </p>
+          )}
           <span className="auth-eyebrow">WELCOME TO YOUR CIRCLE</span>
           <h2>{registering ? "Create your account" : "Welcome back"}</h2>
           <p className="auth-intro">
@@ -116,6 +148,10 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 return;
               }
               setBusy("email");
+              if (!(await connected())) {
+                setBusy(null);
+                return;
+              }
               try {
                 if (registering)
                   await register(name.trim(), email.trim(), password);

@@ -214,7 +214,8 @@ nav {
   align-items: center;
   justify-content: space-between;
   padding: 0 39px;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
 }
 .breadcrumb {
@@ -287,6 +288,14 @@ nav {
   font-weight: 700;
   letter-spacing: -0.5px;
   border: 1px solid #00000006;
+}
+.avatar {
+  overflow: hidden;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .avatar.small {
   width: 34px;
@@ -525,4 +534,124 @@ h1 {
 .heading-add-post {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+/* Pages that need the full workspace width (e.g. Messages). */
+.page-layout.page-layout-wide {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1680px;
+}
+
+/* ---- Collapsible sidebar (desktop only) ---- */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: auto 0 18px;
+  padding: 12px 15px;
+  width: 100%;
+  border-radius: 7px;
+  color: #aab6cc;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+.sidebar-toggle:hover {
+  background: #1d2b43;
+  color: #fff;
+}
+.sidebar,
+.workspace {
+  transition:
+    width 0.22s ease,
+    margin-left 0.22s ease,
+    padding 0.22s ease;
+}
+@media (max-width: 700px) {
+  .sidebar-toggle {
+    display: none;
+  }
+}
+@media (min-width: 701px) {
+  .sidebar-collapsed .sidebar {
+    width: 76px;
+    padding-left: 12px;
+    padding-right: 12px;
+    overflow-x: hidden;
+  }
+  .sidebar-collapsed .workspace {
+    margin-left: 76px;
+  }
+  .sidebar-collapsed .brand {
+    font-size: 0;
+    justify-content: center;
+  }
+  .sidebar-collapsed .brand-dot,
+  .sidebar-collapsed .workspace-label,
+  .sidebar-collapsed .sidebar-community,
+  .sidebar-collapsed .sidebar-toggle span,
+  .sidebar-collapsed .nav-item > span:not(.nav-count) {
+    display: none;
+  }
+  .sidebar-collapsed .brand-mark {
+    padding-right: 0;
+    margin-left: 6px;
+  }
+  .sidebar-collapsed nav {
+    margin-top: 34px;
+  }
+  .sidebar-collapsed .nav-item,
+  .sidebar-collapsed .sidebar-toggle {
+    position: relative;
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .sidebar-collapsed .nav-count {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    margin: 0;
+    font-size: 10px;
+    padding: 0 5px;
+  }
+  .sidebar-collapsed .create-post {
+    font-size: 0;
+    gap: 0;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+/* Notification badge: compact unread count pinned to the bell's corner */
+.notification-button i {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  border: 1.5px solid #fff;
+  background: #e5484d;
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  animation: badge-pop 0.25s ease-out;
+}
+@keyframes badge-pop {
+  from {
+    transform: scale(0.4);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notification-button i {
+    animation: none;
+  }
 }

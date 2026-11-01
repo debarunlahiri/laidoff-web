@@ -1,52 +1,40 @@
 "use client";
-import { useAuth, userInitials } from "@/providers/auth-provider";
-import Avatar from "@/components/ui/avatar";
-import { BriefcaseBusiness, Sparkles } from "lucide-react";
+import ProfileCard from "@/components/profile/profile-card";
+import ProfileEditDialog from "@/components/profile/profile-edit-dialog";
+import { useProfileImageControls } from "@/components/profile/profile-image-controls";
+import ProfileTabs from "@/components/profile/profile-tabs";
+import { useApiResource } from "@/hooks/use-api-resource";
+import type { ApiProfileStats } from "@/lib/api-types";
+import { useAuth } from "@/providers/auth-provider";
+import { Pencil } from "lucide-react";
+import { useState } from "react";
 
 export default function ProfileView() {
   const { user } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const imageControls = useProfileImageControls();
+  const stats = useApiResource<ApiProfileStats | null>(
+    user ? `/users/${user.id}/stats` : null,
+    null,
+  );
+  if (!user) return null;
   return (
-    <article className="profile-page card">
-      <div className="profile-cover" />
-      <div className="profile-page-content">
-        <div className="profile-identity">
-          <Avatar initials={userInitials(user?.name ?? "Member")} />
-          {user?.openToWork && (
-            <span className="tag green-tag">
-              <BriefcaseBusiness size={15} /> Open to work
-            </span>
-          )}
-        </div>
-        <h2>{user?.name}</h2>
-        <p className="profile-role">{user?.role || user?.email}</p>
-        <section className="profile-section">
-          <h3>About</h3>
-          <p>{user?.about || "Your next chapter starts here."}</p>
-        </section>
-        <section className="profile-section">
-          <h3>Skills</h3>
-          <div className="profile-skills">
-            {user?.skills?.length ? (
-              user.skills.map((skill) => (
-                <span key={skill} className="tag">
-                  {skill}
-                </span>
-              ))
-            ) : (
-              <span className="subtle-text">No skills added yet.</span>
-            )}
-          </div>
-        </section>
-        <section className="profile-section">
-          <h3>
-            <Sparkles size={18} /> My next chapter
-          </h3>
-          <p>
-            {user?.nextChapter ||
-              "Connect with your circle and discover opportunities."}
-          </p>
-        </section>
-      </div>
-    </article>
+    <>
+      <ProfileCard
+        profile={user}
+        subtitle={user.email}
+        coverControls={imageControls.coverControls}
+        avatarControls={imageControls.avatarControls}
+        actions={
+          <button className="primary" onClick={() => setEditing(true)}>
+            <Pencil size={15} /> Edit profile
+          </button>
+        }
+      >
+        {imageControls.dialog}
+        {editing && <ProfileEditDialog onClose={() => setEditing(false)} />}
+      </ProfileCard>
+      <ProfileTabs id={user.id} stats={stats.data} own />
+    </>
   );
 }

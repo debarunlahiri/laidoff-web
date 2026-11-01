@@ -331,9 +331,6 @@
   .people-grid {
     gap: 10px;
   }
-  .person-card {
-    padding: 20px 10px;
-  }
   .person-card h3 {
     font-size: 13px;
   }

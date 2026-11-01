@@ -2,7 +2,9 @@
 
 import { useApiResource } from "@/hooks/use-api-resource";
 import { useNotifications } from "@/hooks/use-notifications";
+import { requireSignIn } from "@/lib/api";
 import type { ApiCompany } from "@/lib/api-types";
+import { useRealtimeConnection } from "@/hooks/use-realtime";
 import { useAuth } from "@/providers/auth-provider";
 import { useCommunityNotes } from "@/hooks/use-community-notes";
 import { useReferrals } from "@/hooks/use-referrals";
@@ -11,13 +13,18 @@ import { useInterface } from "@/hooks/use-interface";
 import { useMessages } from "@/hooks/use-messages";
 import { useNetwork } from "@/hooks/use-network";
 import { usePlatformNavigation } from "@/hooks/use-platform-navigation";
+import { usePostReports } from "@/hooks/use-post-reports";
+import { usePostTopics } from "@/hooks/use-post-topics";
 import { usePostComposer } from "@/hooks/use-post-composer";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkforceInsights } from "@/hooks/use-workforce-insights";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, type ReactNode } from "react";
 
 function usePlatformState() {
   const { user } = useAuth();
+  const live = useRealtimeConnection(user?.id);
+  const router = useRouter();
   const navigation = usePlatformNavigation();
   const notifications = useToast();
   const referrals = useReferrals(
@@ -41,15 +48,22 @@ function usePlatformState() {
     user?.id ?? "",
     notifications.notify,
     navigation.navigate,
+    live,
   );
-  const workforceInsights = useWorkforceInsights(navigation.section);
-  const alerts = useNotifications(notifications.notify);
+  const workforceInsights = useWorkforceInsights(
+    navigation.section,
+    notifications.notify,
+  );
+  const alerts = useNotifications(notifications.notify, live);
   const companies = useApiResource<ApiCompany[]>("/companies?limit=100", []);
+  const postTopics = usePostTopics();
+  const reports = usePostReports(notifications.notify);
   const ui = useInterface();
 
   return {
     currentUser: user,
     companies: companies.data,
+    postTopics,
     ...alerts,
     ...navigation,
     ...network,
@@ -61,6 +75,25 @@ function usePlatformState() {
     ...messages,
     ...workforceInsights,
     ...ui,
+    ...reports,
+    // Guests get the sign-in prompt instead of opening a form they can't submit.
+    setComposer: ((value) => {
+      if (value && !user) return requireSignIn();
+      composer.setComposer(value);
+    }) as typeof composer.setComposer,
+    // The referral form is its own page, not a dialog.
+    openReferralForm: () => {
+      if (!user) return requireSignIn();
+      router.push("/referrals/new");
+    },
+    openReportDialog: (id: string) => {
+      if (!user) return requireSignIn();
+      reports.openReportDialog(id);
+    },
+    openNoteDialog: (id: string) => {
+      if (!user) return requireSignIn();
+      communityNotes.openNoteDialog(id);
+    },
   };
 }
 

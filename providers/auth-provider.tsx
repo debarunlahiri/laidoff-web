@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { api } from "@/lib/api";
 import { googleIdToken } from "@/lib/firebase";
 export type AuthUser = {
   id: string;
@@ -20,7 +21,22 @@ export type AuthUser = {
   nextChapter?: string;
   openToWork?: boolean;
   location?: string;
+  profileImageUrl?: string | null;
+  coverImageUrl?: string | null;
+  googleLinked?: boolean;
 };
+export type ProfilePatch = Partial<
+  Pick<
+    AuthUser,
+    | "name"
+    | "role"
+    | "about"
+    | "skills"
+    | "nextChapter"
+    | "openToWork"
+    | "location"
+  >
+>;
 type AuthState = {
   user: AuthUser | null;
   loading: boolean;
@@ -31,6 +47,9 @@ type AuthState = {
   loginGoogle: () => Promise<void>;
   linkGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (patch: ProfilePatch) => Promise<void>;
+  // Local-only update after the server already saved (e.g. new photo URLs).
+  applyProfile: (patch: Partial<AuthUser>) => void;
 };
 const Context = createContext<AuthState | null>(null);
 async function authRequest(action: string, body?: unknown) {
@@ -58,13 +77,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setSessionError("");
     try {
-      const current = await authRequest("session");
-      if (generation === epoch.current) setUser(current);
-    } catch (error) {
-      if (generation !== epoch.current) return;
-      if ((error as { status?: number }).status === 401) setUser(null);
-      else
-        setSessionError("We couldn’t restore your session. Please try again.");
+      // Retry transient failures (server restarting, brief network loss)
+      // before bothering the user with an error screen.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const current = await authRequest("session");
+          if (generation === epoch.current) setUser(current);
+          return;
+        } catch (error) {
+          if (generation !== epoch.current) return;
+          if ((error as { status?: number }).status === 401) {
+            setUser(null);
+            return;
+          }
+          if (attempt >= 3) {
+            setSessionError(
+              "We couldn’t restore your session. Please try again.",
+            );
+            return;
+          }
+          await new Promise((resolve) =>
+            setTimeout(resolve, 700 * 2 ** attempt),
+          );
+          if (generation !== epoch.current) return;
+        }
+      }
     } finally {
       if (generation === epoch.current) setLoading(false);
     }
@@ -87,7 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     epoch.current++;
     setLoading(false);
     const result = await authRequest(action, body);
-    setUser(result.user);
+    setUser(
+      action === "google"
+        ? { ...result.user, googleLinked: true }
+        : result.user,
+    );
     setSessionError("");
   }
   return (
@@ -104,7 +145,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           complete("google", { idToken: await googleIdToken() }),
         linkGoogle: async () => {
           await authRequest("link-google", { idToken: await googleIdToken() });
+          setUser((current) =>
+            current ? { ...current, googleLinked: true } : current,
+          );
         },
+        updateProfile: async (patch) => {
+          await api("/me", { method: "PATCH", body: patch });
+          setUser((current) => (current ? { ...current, ...patch } : current));
+        },
+        applyProfile: (patch) =>
+          setUser((current) => (current ? { ...current, ...patch } : current)),
         logout: async () => {
           epoch.current++;
           await authRequest("logout");

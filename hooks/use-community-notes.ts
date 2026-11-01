@@ -18,23 +18,17 @@ export function useCommunityNotes({
     setNote("");
     setSource("");
   }
-  async function submit(report = false) {
+  async function submit() {
     if (!notePost || noteSaving) return;
     setNoteSaving(true);
     try {
-      await api(`/posts/${notePost}/${report ? "reports" : "notes"}`, {
+      await api(`/posts/${notePost}/notes`, {
         method: "POST",
-        body: report
-          ? { reason: note.trim() || "Requested review of this post" }
-          : { text: note.trim(), sourceUrl: source.trim() },
+        body: { text: note.trim(), sourceUrl: source.trim() },
       });
       setNotePost(null);
       invalidate("posts");
-      notify(
-        report
-          ? "Report submitted for review."
-          : "Community note proposed for review.",
-      );
+      notify("Community note proposed for review.");
     } catch (error) {
       notify(apiMessage(error));
     } finally {
@@ -51,7 +45,6 @@ export function useCommunityNotes({
     openNoteDialog,
     canProposeNote,
     noteSaving,
-    proposeNote: () => submit(),
-    reportPost: () => submit(true),
+    proposeNote: submit,
   };
 }

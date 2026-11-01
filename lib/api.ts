@@ -28,10 +28,7 @@ export async function api<T = void>(
   if (!response.ok) {
     if (response.status === 401) {
       window.dispatchEvent(new Event("auth:expired"));
-      if (options.method && options.method !== "GET")
-        window.location.assign(
-          `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`,
-        );
+      if (options.method && options.method !== "GET") requireSignIn();
     }
     throw new ApiError(
       data?.error?.message ?? "The request failed. Please try again.",
@@ -39,6 +36,9 @@ export async function api<T = void>(
     );
   }
   return data as T;
+}
+export function requireSignIn() {
+  window.dispatchEvent(new Event("auth:required"));
 }
 export function invalidate(...roots: string[]) {
   window.dispatchEvent(new CustomEvent("api:changed", { detail: roots }));

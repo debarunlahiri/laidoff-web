@@ -12,14 +12,30 @@ import {
   UserRound,
   LogOut,
   Link as LinkIcon,
+  Moon,
+  Sparkles,
+  Sun,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import WhatsNewDialog from "@/components/layout/whats-new-dialog";
+import { latestRelease } from "@/config/release-notes";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function AccountMenu() {
   const { user, logout, linkGoogle } = useAuth();
   const router = useRouter();
+  const { theme, toggle: toggleTheme } = useTheme();
   const container = useRef<HTMLDivElement>(null);
+  const [notes, setNotes] = useState(false);
+  const [unseen, setUnseen] = useState(false);
+  useEffect(() => {
+    try {
+      setUnseen(
+        localStorage.getItem("layoffcircle:whatsnew") !== latestRelease,
+      );
+    } catch {}
+  }, []);
   const trigger = useRef<HTMLButtonElement>(null);
   const { notify, accountOpen: open, setAccountOpen: setOpen } = usePlatform();
 
@@ -66,7 +82,11 @@ export default function AccountMenu() {
         aria-label="Open your profile"
         onClick={() => setOpen(false)}
       >
-        <Avatar initials={userInitials(user?.name ?? "Member")} small />
+        <Avatar
+          initials={userInitials(user?.name ?? "Member")}
+          src={user?.profileImageUrl}
+          small
+        />
         <span className="account-summary">
           <strong>{user?.name ?? "Your account"}</strong>
           <small>View your profile</small>
@@ -96,7 +116,33 @@ export default function AccountMenu() {
           <Link href="/bookmarks" onClick={() => setOpen(false)}>
             <Bookmark size={18} /> Saved posts
           </Link>
-          {googleSignInAvailable && (
+          <button
+            onClick={() => {
+              setOpen(false);
+              setNotes(true);
+              setUnseen(false);
+              try {
+                localStorage.setItem("layoffcircle:whatsnew", latestRelease);
+              } catch {}
+            }}
+          >
+            <Sparkles size={18} />
+            <span>What’s new</span>
+            {unseen && <span className="new-dot" aria-label="New" />}
+          </button>
+          <button
+            role="menuitemcheckbox"
+            aria-checked={theme === "dark"}
+            onClick={toggleTheme}
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+            <span
+              className={`theme-switch ${theme === "dark" ? "on" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
+          {googleSignInAvailable && !user.googleLinked && (
             <button
               onClick={async () => {
                 setOpen(false);
@@ -144,6 +190,7 @@ export default function AccountMenu() {
           </button>
         </div>
       )}
+      {notes && <WhatsNewDialog onClose={() => setNotes(false)} />}
     </div>
   );
 }

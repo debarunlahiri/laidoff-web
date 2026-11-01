@@ -1,5 +1,4 @@
 "use client";
-import { discoveryTopics } from "@/config/feed";
 import PostCard from "@/components/feed/post-card";
 import { usePlatform } from "@/providers/platform-provider";
 import { Search } from "lucide-react";
@@ -14,6 +13,7 @@ export default function ExploreView() {
     feedError,
     feedHasMore,
     loadMorePosts,
+    postTopics,
   } = usePlatform();
 
   return (
@@ -22,11 +22,11 @@ export default function ExploreView() {
         <h2>Discover a conversation</h2>
       </div>
       <div
-        className="discovery-tabs"
+        className="discovery-tabs pill-tabs"
         role="group"
         aria-label="Conversation topics"
       >
-        {["All", ...discoveryTopics].map((topic) => (
+        {["All", ...postTopics].map((topic) => (
           <button
             type="button"
             className={selectedTopic === topic ? "selected" : ""}

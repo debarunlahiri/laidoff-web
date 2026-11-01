@@ -1,104 +1,123 @@
 "use client";
 import ReferralCard from "@/components/referrals/referral-card";
+import ReferralFiltersBar from "@/components/referrals/referral-filters";
+import {
+  useReferralBoard,
+  type ReferralView,
+} from "@/hooks/use-referral-board";
+import { useAuth } from "@/providers/auth-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import { BriefcaseBusiness } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
 
-const referralTabs = ["All", "Available", "My referrals", "Requested"] as const;
+const tabs: { view: ReferralView; label: string; personal: boolean }[] = [
+  { view: "all", label: "All", personal: false },
+  { view: "available", label: "Available", personal: true },
+  { view: "mine", label: "My referrals", personal: true },
+  { view: "requested", label: "Requested", personal: true },
+];
 
 export default function ReferralsView() {
-  const {
-    opportunities,
-    requested,
-    setReferralComposer,
-    referralsLoading,
-    referralsError,
-    referralsHasMore,
-    loadMoreReferrals,
-  } = usePlatform();
-  const [selectedTab, setSelectedTab] =
-    useState<(typeof referralTabs)[number]>("All");
-  const visibleOpportunities = opportunities.filter((item) => {
-    const isRequested = requested.includes(
-      item.id ?? `${item.company}-${item.title}`,
-    );
-    if (selectedTab === "Available")
-      return !item.own && !isRequested && item.status === "open";
-    if (selectedTab === "My referrals") return item.own;
-    if (selectedTab === "Requested") return isRequested;
-    return true;
-  });
+  const { user } = useAuth();
+  const { openReferralForm } = usePlatform();
+  const board = useReferralBoard();
+  const { filters } = board;
+  const searching = board.activeCount > 0 || Boolean(filters.search.trim());
 
   return (
     <>
+      {board.sharedId && (
+        <p className="shared-referral-note" role="status">
+          Showing a shared referral.{" "}
+          <Link href="/referrals">View all referrals</Link>
+        </p>
+      )}
       <div
-        className="discovery-tabs"
+        className="discovery-tabs pill-tabs"
         role="group"
-        aria-label="Referral filters"
+        aria-label="Referral views"
       >
-        {referralTabs.map((tab) => (
-          <button
-            type="button"
-            key={tab}
-            className={selectedTab === tab ? "selected" : ""}
-            aria-pressed={selectedTab === tab}
-            onClick={() => setSelectedTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+        {tabs
+          .filter((tab) => user || !tab.personal)
+          .map((tab) => (
+            <button
+              type="button"
+              key={tab.view}
+              className={filters.view === tab.view ? "selected" : ""}
+              aria-pressed={filters.view === tab.view}
+              onClick={() => board.setFilters({ view: tab.view })}
+            >
+              {tab.label}
+            </button>
+          ))}
       </div>
+      <ReferralFiltersBar
+        filters={filters}
+        activeCount={board.activeCount}
+        signedIn={Boolean(user)}
+        onChange={board.setFilters}
+        onReset={board.reset}
+      />
       <div className="section-bar">
         <h2>Opportunities with a human connection</h2>
+        {!board.loading && (
+          <small className="result-count">
+            {board.items.length}
+            {board.hasMore ? "+" : ""} shown
+          </small>
+        )}
       </div>
-      {visibleOpportunities.map((item) => (
-        <ReferralCard
-          key={item.id ?? `${item.company}-${item.title}`}
-          item={item}
-        />
+      {board.items.map((item) => (
+        <ReferralCard key={item.id} item={item} />
       ))}
-      {referralsLoading && <p role="status">Loading referrals…</p>}
-      {referralsError && <p role="alert">{referralsError}</p>}
-      {referralsHasMore && (
+      {board.loading && <p role="status">Loading referrals…</p>}
+      {board.error && <p role="alert">{board.error}</p>}
+      {board.hasMore && (
         <button
           className="secondary"
-          disabled={referralsLoading}
-          onClick={() => void loadMoreReferrals()}
+          disabled={board.loading}
+          onClick={() => void board.loadMore()}
         >
           Load more referrals
         </button>
       )}
-      {!referralsLoading &&
-        !referralsError &&
-        visibleOpportunities.length === 0 && (
-          <div className="empty card">
-            <BriefcaseBusiness size={28} />
-            <h3>
-              {selectedTab === "My referrals"
+      {!board.loading && !board.error && board.items.length === 0 && (
+        <div className="empty card">
+          <BriefcaseBusiness size={28} />
+          <h3>
+            {searching
+              ? "No referrals match these filters."
+              : filters.view === "mine"
                 ? "You haven’t added a referral yet."
-                : selectedTab === "Requested"
+                : filters.view === "requested"
                   ? "You haven’t requested a referral yet."
                   : "No available referrals right now."}
-            </h3>
-            <p>
-              {selectedTab === "My referrals"
+          </h3>
+          <p>
+            {searching
+              ? "Try removing a filter or searching for something broader."
+              : filters.view === "mine"
                 ? "Share an opportunity and help someone take their next step."
                 : "Explore the opportunities to find your next connection."}
-            </p>
-            <button
-              className="text-button"
-              onClick={() =>
-                selectedTab === "My referrals"
-                  ? setReferralComposer(true)
-                  : setSelectedTab("All")
-              }
-            >
-              {selectedTab === "My referrals"
+          </p>
+          <button
+            className="text-button"
+            onClick={() => {
+              if (searching) {
+                board.reset();
+                board.setFilters({ search: "" });
+              } else if (filters.view === "mine") openReferralForm();
+              else board.setFilters({ view: "all" });
+            }}
+          >
+            {searching
+              ? "Clear filters"
+              : filters.view === "mine"
                 ? "Add referrals"
                 : "View all referrals"}
-            </button>
-          </div>
-        )}
+          </button>
+        </div>
+      )}
       <p className="subtle-text">
         Referrals are voluntary and always free. Requests are shared with the
         person offering the referral.

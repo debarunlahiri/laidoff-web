@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { api, apiMessage, initials, invalidate } from "@/lib/api";
+import { api, apiMessage, invalidate } from "@/lib/api";
 import type { ApiPerson, ApiConnection } from "@/lib/api-types";
+import { toPerson } from "@/lib/person-mapper";
 import type { Person } from "@/types";
 import { useApiList, useApiResource } from "./use-api-resource";
 export function useNetwork(notify: (message: string) => void, userId: string) {
@@ -25,12 +26,7 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
   const connected = links.data.map((link) =>
     link.requester_id === userId ? link.recipient_id : link.requester_id,
   );
-  const people: Person[] = users.data.map((person) => ({
-    ...person,
-    initials: initials(person.name),
-    color: "blue",
-    detail: person.openToWork ? "Open to work" : "Community member",
-  }));
+  const people: Person[] = users.data.map(toPerson);
   async function act(id: string, action: () => Promise<unknown>) {
     if (pending.includes(id)) return;
     setPending((current) => [...current, id]);

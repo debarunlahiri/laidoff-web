@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type HTMLAttributes, type ReactNode } from "react";
 
 type DialogProps = {
   label: string;
   onClose: () => void;
   className?: string;
+  // Extra props for the dialog element (e.g. drag-and-drop handlers).
+  sectionProps?: HTMLAttributes<HTMLElement>;
   children: ReactNode;
 };
 
@@ -13,6 +15,7 @@ export default function Dialog({
   label,
   onClose,
   className = "",
+  sectionProps,
   children,
 }: DialogProps) {
   const dialogRef = useRef<HTMLElement>(null);
@@ -68,6 +71,7 @@ export default function Dialog({
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <section
+        {...sectionProps}
         ref={dialogRef}
         className={`modal card ${className}`}
         role="dialog"

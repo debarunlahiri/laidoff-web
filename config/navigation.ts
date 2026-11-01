@@ -25,4 +25,6 @@ export const sectionPaths: Record<string, string> = {
   "Workforce insights": "/insights",
   Messages: "/messages",
   Bookmarks: "/bookmarks",
+  Notifications: "/notifications",
+  More: "/more",
 };

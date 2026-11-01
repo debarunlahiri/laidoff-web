@@ -101,8 +101,16 @@
   gap: 9px;
   margin-bottom: 20px;
 }
-.suggestion > div {
+.suggestion > div,
+.suggestion > .user-link > div {
   flex: 1;
+  min-width: 0;
+}
+.suggestion > .user-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 0;
   min-width: 0;
 }
 .suggestion strong {
@@ -110,7 +118,8 @@
   font-size: 12px;
   margin-bottom: 4px;
 }
-.suggestion > div > span {
+.suggestion > div > span,
+.suggestion > .user-link > div > span {
   display: block;
   font-size: 11px;
   color: #606a7f;
@@ -313,7 +322,8 @@ footer p span {
   white-space: normal;
   line-height: 1.4;
 }
-.suggestion > div > span {
+.suggestion > div > span,
+.suggestion > .user-link > div > span {
   white-space: normal;
   line-height: 1.5;
 }
@@ -348,4 +358,196 @@ footer,
 footer p {
   font-size: 11px;
   color: #64748b;
+}
+
+/* ---- Global search: autocomplete + results ---- */
+.search-combobox {
+  position: relative;
+}
+.search-combobox > .search-box {
+  margin: 0;
+}
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: 8px;
+  box-shadow: 0 16px 40px rgba(19, 31, 53, 0.16);
+}
+.search-group-title {
+  margin: 10px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.search-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.search-option.highlighted {
+  background: #edf2ff;
+}
+.search-option-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f1f4fa;
+  color: #596376;
+}
+.search-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.search-option-text strong {
+  font-size: 14px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-option-text small {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-see-all {
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+  padding-top: 12px;
+}
+.search-see-all strong {
+  color: var(--green);
+}
+.search-status {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.search-section {
+  margin-bottom: 28px;
+}
+.search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+}
+.company-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px;
+}
+.company-result-links {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+}
+.company-result-links a {
+  color: var(--green);
+  font-weight: 600;
+}
+.topic-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.topic-result {
+  width: auto;
+}
+
+/* ---- Search polish ---- */
+.search-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.search-option-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.search-option:has(.search-option-main):hover {
+  background: #edf2ff;
+}
+.search-option-remove {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 10px 8px;
+}
+.skeleton-list {
+  display: grid;
+  gap: 14px;
+  padding: 10px;
+}
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.skeleton-lines {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+.skeleton {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eef1f7 25%, #f8f9fc 50%, #eef1f7 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s linear infinite;
+}
+.skeleton-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex: 0 0 38px;
+}
+.skeleton-line {
+  height: 12px;
+  width: 90%;
+}
+.skeleton-line.short {
+  width: 55%;
+}
+@keyframes skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }

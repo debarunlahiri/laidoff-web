@@ -1,5 +1,6 @@
 "use client";
 import Avatar from "@/components/ui/avatar";
+import UserLink from "@/components/ui/user-link";
 import { usePlatform } from "@/providers/platform-provider";
 import { ArrowRight, Check, UserPlus, Users } from "lucide-react";
 
@@ -16,17 +17,19 @@ export default function PeopleSuggestions() {
       <p className="rail-subtitle">A new connection can change everything.</p>
       {people.slice(0, 3).map((person) => (
         <div className="suggestion" key={person.id}>
-          <Avatar initials={person.initials} color={person.color} small />
-          <div>
-            <strong>{person.name}</strong>
-            <span>{person.role}</span>
-            <small>
-              {person.detail === "Offering referrals" && (
-                <span className="status-dot" />
-              )}
-              {person.detail}
-            </small>
-          </div>
+          <UserLink id={person.id}>
+            <Avatar
+              initials={person.initials}
+              color={person.color}
+              src={person.imageUrl}
+              small
+            />
+            <div>
+              <strong>{person.name}</strong>
+              <span>{person.role}</span>
+              {person.detail && <small>{person.detail}</small>}
+            </div>
+          </UserLink>
           <button
             aria-label={`Connect with ${person.name}`}
             className={`connect-icon ${connected.includes(person.id ?? "") ? "connected" : ""}`}

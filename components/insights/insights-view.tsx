@@ -2,15 +2,21 @@
 import CompanyTable from "@/components/insights/company-table";
 import WorkforceChart from "@/components/insights/workforce-chart";
 import { usePlatform } from "@/providers/platform-provider";
-import { ShieldCheck } from "lucide-react";
+import ReportDialog from "@/components/insights/report-dialog";
+import { FilePlus2, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 export default function InsightsView() {
   const { year, setYear, insights, insightsLoading, insightsError } =
     usePlatform();
+  const [reporting, setReporting] = useState(false);
   const current = new Date().getFullYear();
   return (
     <>
       <div className="section-bar">
         <h2>Workforce at a glance</h2>
+        <button className="primary" onClick={() => setReporting(true)}>
+          <FilePlus2 size={16} /> Submit a report
+        </button>
         <select
           aria-label="Reporting year"
           value={year}
@@ -55,6 +61,7 @@ export default function InsightsView() {
       </div>
       <WorkforceChart />
       <CompanyTable />
+      {reporting && <ReportDialog onClose={() => setReporting(false)} />}
     </>
   );
 }

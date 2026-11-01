@@ -1,26 +1,19 @@
 "use client";
 import AccountMenu from "@/components/layout/account-menu";
 import { usePlatform } from "@/providers/platform-provider";
-import {
-  ArrowRight,
-  Bell,
-  ThumbsUp,
-  Menu,
-  Search,
-  UserPlus,
-  X,
-} from "lucide-react";
+import { ArrowRight, Bell, Menu, Search, UserPlus, X } from "lucide-react";
 
-import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import SearchBox from "@/components/search/search-box";
+import { Suspense, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import NotificationRow from "@/components/notifications/notification-row";
+import { notificationMeta } from "@/lib/notification-meta";
+import type { ApiNotification } from "@/lib/api-types";
 
 export default function Topbar() {
   const {
     currentUser,
-    section,
-    setSection,
-    search,
-    setSearch,
     notifications,
     setNotifications,
     setAccountOpen,
@@ -31,14 +24,13 @@ export default function Topbar() {
     notificationCount,
     notificationsLoading,
     notificationsError,
-    notificationsHasMore,
-    loadMoreNotifications,
     markNotificationRead,
   } = usePlatform();
 
   const notificationTrigger = useRef<HTMLButtonElement>(null);
   const notificationPanel = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setNotifications(false);
@@ -88,116 +80,114 @@ export default function Topbar() {
       >
         <Menu />
       </button>
-      <label className="search-box topbar-search">
-        <Search size={17} />
-        <input
-          aria-label="Search the community"
-          placeholder="Search LayoffCircle"
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            if (section !== "Home" && section !== "Explore") {
-              setSection("Explore");
-            }
-          }}
-        />
-      </label>
+      <Suspense
+        fallback={
+          <label className="search-box topbar-search">
+            <Search size={17} />
+            <input
+              aria-label="Search the community"
+              placeholder="Search LayoffCircle"
+              disabled
+            />
+          </label>
+        }
+      >
+        <SearchBox />
+      </Suspense>
       <div className="header-actions">
-        <button
-          ref={notificationTrigger}
-          className="notification-button icon-button"
-          aria-label="Notifications"
-          aria-expanded={notifications}
-          aria-controls={notifications ? "notification-panel" : undefined}
-          onClick={() => {
-            if (!currentUser) {
-              window.location.assign(
-                `/login?next=${encodeURIComponent(pathname)}`,
-              );
-              return;
-            }
-            setNotifications(!notifications);
-          }}
-        >
-          <Bell size={20} />
-          {notificationCount > 0 && <i />}
-        </button>
+        <div className="notification-anchor">
+          <button
+            ref={notificationTrigger}
+            className="notification-button icon-button"
+            aria-label="Notifications"
+            aria-expanded={notifications}
+            aria-controls={notifications ? "notification-panel" : undefined}
+            onClick={() => {
+              if (!currentUser) {
+                window.location.assign(
+                  `/login?next=${encodeURIComponent(pathname)}`,
+                );
+                return;
+              }
+              setNotifications(!notifications);
+            }}
+          >
+            <Bell size={20} />
+            {notificationCount > 0 && (
+              <i aria-label={`${notificationCount} unread`}>
+                {notificationCount > 9 ? "9+" : notificationCount}
+              </i>
+            )}
+          </button>
+          {notifications && (
+            <div
+              ref={notificationPanel}
+              className="notification-panel card"
+              id="notification-panel"
+              role="region"
+              aria-label="Notifications"
+            >
+              <div className="notification-panel-heading">
+                <h3>
+                  Notifications
+                  {notificationCount > 0 && (
+                    <span className="new-badge">{notificationCount} new</span>
+                  )}
+                </h3>
+                <button
+                  className="icon-button"
+                  aria-label="Close notifications"
+                  onClick={() => {
+                    setNotifications(false);
+                    notificationTrigger.current?.focus();
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              {notificationsLoading && !notificationItems.length && (
+                <p role="status">Loading notifications…</p>
+              )}
+              {notificationsError && <p role="alert">{notificationsError}</p>}
+              {!notificationsLoading && !notificationItems.length && (
+                <p>You’re all caught up.</p>
+              )}
+              {notificationItems.slice(0, 5).map((item) => (
+                <NotificationRow
+                  key={item.id}
+                  item={item}
+                  onOpen={(row: ApiNotification) => {
+                    if (!row.readAt) void markNotificationRead(row.id);
+                    setNotifications(false);
+                    router.push(notificationMeta(row).href);
+                  }}
+                />
+              ))}
+              <div className="notification-panel-footer">
+                {notificationCount > 0 ? (
+                  <button
+                    className="text-button"
+                    onClick={() => void markNotificationRead()}
+                  >
+                    Mark all as read
+                  </button>
+                ) : (
+                  <span />
+                )}
+                <Link
+                  className="text-button"
+                  href="/notifications"
+                  onClick={() => setNotifications(false)}
+                >
+                  See all notifications <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
         <span className="header-divider" />
         <AccountMenu />
       </div>
-      {notifications && (
-        <div
-          ref={notificationPanel}
-          className="notification-panel card"
-          id="notification-panel"
-          role="region"
-          aria-label="Notifications"
-        >
-          <div className="notification-panel-heading">
-            <h3>You’re making connections</h3>
-            <button
-              className="icon-button"
-              aria-label="Close notifications"
-              onClick={() => {
-                setNotifications(false);
-                notificationTrigger.current?.focus();
-              }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-          {notificationsLoading && <p role="status">Loading notifications…</p>}
-          {notificationsError && <p role="alert">{notificationsError}</p>}
-          {!notificationsLoading && !notificationItems.length && (
-            <p>You’re all caught up.</p>
-          )}
-          {notificationItems.map((item) => (
-            <button
-              className="notification-item"
-              key={item.id}
-              onClick={() => {
-                void markNotificationRead(item.id);
-                setNotifications(false);
-                navigate(
-                  item.type === "message"
-                    ? "Messages"
-                    : item.type.startsWith("referral")
-                      ? "Referrals"
-                      : item.type.startsWith("connection")
-                        ? "My network"
-                        : "Home",
-                );
-              }}
-            >
-              {item.type === "like" ? (
-                <ThumbsUp size={18} />
-              ) : (
-                <Bell size={18} />
-              )}
-              <span>
-                {item.text}
-                {!item.readAt && <small>Unread</small>}
-              </span>
-            </button>
-          ))}
-          {notificationsHasMore && (
-            <button
-              className="text-button"
-              onClick={() => void loadMoreNotifications()}
-            >
-              Load more
-            </button>
-          )}
-          {notificationCount > 0 && (
-            <button
-              className="text-button"
-              onClick={() => void markNotificationRead()}
-            >
-              Mark all as read
-            </button>
-          )}
-        </div>
-      )}
     </header>
   );
 }

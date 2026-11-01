@@ -33,7 +33,9 @@ export default function TrendingTopics() {
           <span className="trend-number">0{i + 1}</span>
           <span>
             <strong>{topic}</strong>
-            <small>{posts} posts</small>
+            <small>
+              {posts} {posts === 1 ? "post" : "posts"}
+            </small>
           </span>
           <ArrowUpRight size={14} />
         </button>
