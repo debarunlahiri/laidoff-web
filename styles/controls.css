@@ -20,3 +20,39 @@ select:not([multiple]):not([size]):disabled {
 .company-chevron {
   right: 16px;
 }
+
+/* Shared confirmation dialog */
+.confirm-dialog.modal {
+  width: 420px;
+}
+.confirm-title {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.confirm-actions > button {
+  min-width: 96px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.confirm-actions .danger-button {
+  background: #d23a3a;
+  color: #fff;
+  border: 0;
+}
+@media (max-width: 700px) {
+  .confirm-actions {
+    flex-direction: column-reverse;
+  }
+  .confirm-actions > button {
+    width: 100%;
+  }
+}

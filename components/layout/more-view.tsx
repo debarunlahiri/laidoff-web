@@ -2,6 +2,7 @@
 import Avatar from "@/components/ui/avatar";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth, userInitials } from "@/providers/auth-provider";
+import { useConfirm } from "@/providers/confirm-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import {
   Bell,
@@ -33,6 +34,7 @@ export default function MoreView() {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
   const router = useRouter();
+  const confirm = useConfirm();
   const dark = theme === "dark";
 
   return (
@@ -99,6 +101,15 @@ export default function MoreView() {
           <button
             className="danger"
             onClick={async () => {
+              if (
+                !(await confirm({
+                  title: "Sign out?",
+                  message: "You can sign back in any time.",
+                  confirmLabel: "Sign out",
+                  tone: "danger",
+                }))
+              )
+                return;
               try {
                 await logout();
                 router.replace("/");

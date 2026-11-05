@@ -6,6 +6,7 @@ import { mapsLink } from "@/lib/google-maps";
 import { api, invalidate, requireSignIn } from "@/lib/api";
 import { levelLabels, postedAgo, workModeLabels } from "@/lib/referral-meta";
 import { useAuth } from "@/providers/auth-provider";
+import { useConfirm } from "@/providers/confirm-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import type { ReferralOpportunity } from "@/types";
 import {
@@ -35,6 +36,7 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
     referralPending,
     notify,
   } = usePlatform();
+  const confirm = useConfirm();
   const busy = Boolean(item.id && referralPending.includes(item.id));
   const closed = item.status === "closed";
   const asks = item.requestFields.length;
@@ -181,13 +183,20 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
                 </button>
                 <button
                   disabled={busy}
-                  onClick={() => {
+                  onClick={async () => {
                     close();
-                    if (item.id)
-                      void setReferralStatus(
-                        item.id,
-                        closed ? "open" : "closed",
-                      );
+                    if (!item.id) return;
+                    if (
+                      !closed &&
+                      !(await confirm({
+                        title: "Close this referral?",
+                        message:
+                          "People will no longer be able to send requests. You can reopen it later.",
+                        confirmLabel: "Close referral",
+                      }))
+                    )
+                      return;
+                    void setReferralStatus(item.id, closed ? "open" : "closed");
                   }}
                 >
                   {closed ? <RotateCcw size={16} /> : <Lock size={16} />}
@@ -198,11 +207,7 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
                   disabled={busy}
                   onClick={() => {
                     close();
-                    if (
-                      item.id &&
-                      window.confirm("Delete this referral permanently?")
-                    )
-                      void deleteReferral(item.id);
+                    if (item.id) void deleteReferral(item.id);
                   }}
                 >
                   <Trash2 size={16} />

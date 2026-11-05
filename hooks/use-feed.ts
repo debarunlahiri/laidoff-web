@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/providers/auth-provider";
+import { useConfirm } from "@/providers/confirm-provider";
 import { useState } from "react";
 import { api, apiMessage, invalidate, queryPath } from "@/lib/api";
 import type { ApiComment, ApiPost } from "@/lib/api-types";
@@ -17,6 +18,7 @@ export function useFeed(
   notify: (message: string) => void,
 ) {
   const { user } = useAuth();
+  const confirm = useConfirm();
   const [tab, setTab] = useState("For you");
   const [feedTopic, setFeedTopic] = useState("");
   const [exploreTopic, setExploreTopic] = useState("All");
@@ -105,6 +107,14 @@ export function useFeed(
     setFeedSort("Latest");
   }
   async function restoreHiddenPosts() {
+    if (
+      !(await confirm({
+        title: "Restore all hidden posts?",
+        message: "Every post you hid will show up in your feed again.",
+        confirmLabel: "Restore",
+      }))
+    )
+      return;
     try {
       await api("/posts/hidden/all", { method: "DELETE" });
       invalidate("posts");
@@ -144,25 +154,64 @@ export function useFeed(
       react(id, "like", current),
     toggleDislike: (id: string, current: "like" | "dislike" | null) =>
       react(id, "dislike", current),
-    toggleBookmark: (id: string, isSaved: boolean) =>
-      mutate(id, () =>
+    toggleBookmark: async (id: string, isSaved: boolean) => {
+      if (
+        isSaved &&
+        !(await confirm({
+          title: "Remove from saved posts?",
+          confirmLabel: "Remove",
+          tone: "danger",
+        }))
+      )
+        return;
+      return mutate(id, () =>
         api(`/posts/${id}/bookmark`, {
           method: isSaved ? "DELETE" : "PUT",
         }),
-      ),
-    toggleRepost: (id: string, isReposted: boolean) =>
-      mutate(id, () =>
+      );
+    },
+    toggleRepost: async (id: string, isReposted: boolean) => {
+      if (
+        isReposted &&
+        !(await confirm({
+          title: "Undo your repost?",
+          confirmLabel: "Undo repost",
+          tone: "danger",
+        }))
+      )
+        return;
+      return mutate(id, () =>
         api(`/posts/${id}/repost`, {
           method: isReposted ? "DELETE" : "PUT",
         }),
-      ),
-    hidePost: (id: string) =>
-      mutate(id, () => api(`/posts/${id}/hide`, { method: "PUT" })),
-    deletePost: (id: string) =>
-      mutate(id, async () => {
+      );
+    },
+    hidePost: async (id: string) => {
+      if (
+        !(await confirm({
+          title: "Hide this post?",
+          message: "You can bring hidden posts back from the feed filters.",
+          confirmLabel: "Hide post",
+        }))
+      )
+        return;
+      return mutate(id, () => api(`/posts/${id}/hide`, { method: "PUT" }));
+    },
+    deletePost: async (id: string) => {
+      if (
+        !(await confirm({
+          title: "Delete this post?",
+          message: "This permanently deletes the post and its comments.",
+          confirmLabel: "Delete post",
+          tone: "danger",
+        }))
+      )
+        return;
+      return mutate(id, async () => {
         await api(`/posts/${id}`, { method: "DELETE" });
         notify("Post deleted.");
-      }),
+      });
+    },
     toggleComments: (id: string) => {
       setCommentPost((current) => (current === id ? null : id));
     },

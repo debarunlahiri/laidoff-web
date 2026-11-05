@@ -4,6 +4,7 @@ import { useAuth, userInitials } from "@/providers/auth-provider";
 import { googleSignInAvailable } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Avatar from "@/components/ui/avatar";
+import { useConfirm } from "@/providers/confirm-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import {
   Bookmark,
@@ -25,6 +26,7 @@ import { useTheme } from "@/hooks/use-theme";
 export default function AccountMenu() {
   const { user, logout, linkGoogle } = useAuth();
   const router = useRouter();
+  const confirm = useConfirm();
   const { theme, toggle: toggleTheme } = useTheme();
   const container = useRef<HTMLDivElement>(null);
   const [notes, setNotes] = useState(false);
@@ -167,6 +169,15 @@ export default function AccountMenu() {
           <button
             onClick={async () => {
               setOpen(false);
+              if (
+                !(await confirm({
+                  title: "Sign out?",
+                  message: "You can sign back in any time.",
+                  confirmLabel: "Sign out",
+                  tone: "danger",
+                }))
+              )
+                return;
               try {
                 await logout();
                 router.replace("/");

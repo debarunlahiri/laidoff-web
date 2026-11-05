@@ -48,7 +48,7 @@ export function useImageDrop({
       const images = files.filter((item) => item.type.startsWith("image/"));
       if (!images.length)
         return onError("Drop image files (PNG, JPEG, WebP or GIF).");
-      const results = await Promise.allSettled(images.map(readImageFile));
+      const results = await Promise.allSettled(images.map((image) => readImageFile(image)));
       const good = results.flatMap((r) =>
         r.status === "fulfilled" ? [r.value] : [],
       );

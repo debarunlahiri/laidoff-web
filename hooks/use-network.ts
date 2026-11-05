@@ -4,8 +4,10 @@ import { api, apiMessage, invalidate } from "@/lib/api";
 import type { ApiPerson, ApiConnection } from "@/lib/api-types";
 import { toPerson } from "@/lib/person-mapper";
 import type { Person } from "@/types";
+import { useConfirm } from "@/providers/confirm-provider";
 import { useApiList, useApiResource } from "./use-api-resource";
 export function useNetwork(notify: (message: string) => void, userId: string) {
+  const confirm = useConfirm();
   const stats = useApiResource<{
     connections: number;
     following: number;
@@ -39,13 +41,24 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
       setPending((current) => current.filter((item) => item !== id));
     }
   }
-  function toggleConnection(id: string) {
+  async function toggleConnection(id: string) {
     const existing = links.data.find(
       (link) =>
         (link.requester_id === userId
           ? link.recipient_id
           : link.requester_id) === id,
     );
+    if (
+      existing &&
+      !(await confirm({
+        title: "Remove this connection?",
+        message:
+          "This removes the connection, or cancels the request if it is still pending.",
+        confirmLabel: "Remove",
+        tone: "danger",
+      }))
+    )
+      return;
     return act(id, () =>
       existing
         ? api(`/connections/${existing.id}`, { method: "DELETE" })
@@ -60,12 +73,22 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
     connections: links.data,
     networkPending: pending,
     toggleConnection,
-    toggleFollow: (id: string, current?: boolean) =>
-      act(id, () =>
-        api(`/users/${id}/follow`, {
-          method: (current ?? following.includes(id)) ? "DELETE" : "PUT",
-        }),
-      ),
+    toggleFollow: async (id: string, current?: boolean) => {
+      const unfollow = current ?? following.includes(id);
+      if (
+        unfollow &&
+        !(await confirm({
+          title: "Unfollow this person?",
+          message: "Their posts will no longer appear in your Following feed.",
+          confirmLabel: "Unfollow",
+          tone: "danger",
+        }))
+      )
+        return;
+      return act(id, () =>
+        api(`/users/${id}/follow`, { method: unfollow ? "DELETE" : "PUT" }),
+      );
+    },
     acceptConnection: (id: string) =>
       act(id, () =>
         api(`/connections/${id}`, {

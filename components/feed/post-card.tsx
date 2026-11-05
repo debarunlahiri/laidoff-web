@@ -198,8 +198,7 @@ export default function PostCard({
                 <button
                   onClick={() => {
                     close();
-                    if (window.confirm("Delete this post permanently?"))
-                      void deletePost(post.id);
+                    void deletePost(post.id);
                   }}
                 >
                   <Trash2 size={16} />

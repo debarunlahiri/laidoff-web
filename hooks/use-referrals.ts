@@ -10,11 +10,13 @@ import type {
 } from "@/lib/api-types";
 import { toOpportunity } from "@/lib/referral-mapper";
 import type { ReferralOpportunity } from "@/types";
+import { useConfirm } from "@/providers/confirm-provider";
 import { useApiList, useDebouncedValue } from "./use-api-resource";
 export function useReferrals(
   notify: (message: string) => void,
   search: string,
 ) {
+  const confirm = useConfirm();
   const [referralSaving, setReferralSaving] = useState(false);
   const [requestReferralId, setRequestReferralId] = useState<string | null>(
     null,
@@ -145,16 +147,36 @@ export function useReferrals(
     uploadDocument,
     referralFeedback: feedback,
     rateReferral,
-    withdrawRequest: (id: string) =>
-      act(id, async () => {
+    withdrawRequest: async (id: string) => {
+      if (
+        !(await confirm({
+          title: "Withdraw your request?",
+          message: "The referrer will no longer see your request.",
+          confirmLabel: "Withdraw",
+          tone: "danger",
+        }))
+      )
+        return;
+      return act(id, async () => {
         await api(`/referrals/${id}/requests`, { method: "DELETE" });
         notify("Your request was withdrawn.");
-      }),
-    deleteReferral: (id: string) =>
-      act(id, async () => {
+      });
+    },
+    deleteReferral: async (id: string) => {
+      if (
+        !(await confirm({
+          title: "Delete this referral?",
+          message: "This permanently removes it, along with its requests.",
+          confirmLabel: "Delete referral",
+          tone: "danger",
+        }))
+      )
+        return;
+      return act(id, async () => {
         await api(`/referrals/${id}`, { method: "DELETE" });
         notify("Referral removed.");
-      }),
+      });
+    },
     opportunities,
     requested,
     referralSaving,

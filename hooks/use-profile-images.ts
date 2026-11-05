@@ -1,4 +1,5 @@
 "use client";
+import { useConfirm } from "@/providers/confirm-provider";
 import { api, apiMessage } from "@/lib/api";
 import { readImageFile } from "@/lib/image-file";
 
@@ -29,6 +30,7 @@ export const imageSpecs = {
 
 // Pick -> crop -> upload -> attach to the signed-in member's profile.
 export function useProfileImages(notify: (message: string) => void) {
+  const confirm = useConfirm();
   const { applyProfile } = useAuth();
   const [pending, setPending] = useState<{
     kind: ImageKind;
@@ -77,6 +79,17 @@ export function useProfileImages(notify: (message: string) => void) {
   }
 
   async function remove(kind: ImageKind) {
+    if (
+      !(await confirm({
+        title:
+          kind === "profile"
+            ? "Remove your profile photo?"
+            : "Remove your cover?",
+        confirmLabel: "Remove",
+        tone: "danger",
+      }))
+    )
+      return;
     try {
       await api(`/me/images/${kind}`, { method: "DELETE" });
       applyProfile(
