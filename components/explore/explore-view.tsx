@@ -1,4 +1,5 @@
 "use client";
+import PillTabs from "@/components/ui/pill-tabs";
 import PostCard from "@/components/feed/post-card";
 import { usePlatform } from "@/providers/platform-provider";
 import { Search } from "lucide-react";
@@ -21,23 +22,15 @@ export default function ExploreView() {
       <div className="section-bar">
         <h2>Discover a conversation</h2>
       </div>
-      <div
-        className="discovery-tabs pill-tabs"
-        role="group"
-        aria-label="Conversation topics"
-      >
-        {["All", ...postTopics].map((topic) => (
-          <button
-            type="button"
-            className={selectedTopic === topic ? "selected" : ""}
-            key={topic}
-            aria-pressed={selectedTopic === topic}
-            onClick={() => setSelectedTopic(topic)}
-          >
-            {topic}
-          </button>
-        ))}
-      </div>
+      <PillTabs
+        label="Conversation topics"
+        items={["All", ...postTopics].map((topic) => ({
+          key: topic,
+          label: topic,
+        }))}
+        active={selectedTopic}
+        onChange={setSelectedTopic}
+      />
       <div className="section-bar">
         <h2>
           {search ? `Results for “${search}”` : "From across the community"}

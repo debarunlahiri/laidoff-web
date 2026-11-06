@@ -1,11 +1,13 @@
 import ReferralsView from "@/components/referrals/referrals-view";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-export default function ReferralsPage() {
-  // The board reads ?id= for shared links, which needs a Suspense boundary.
-  return (
-    <Suspense>
-      <ReferralsView />
-    </Suspense>
-  );
+export default async function ReferralsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string | string[] }>;
+}) {
+  const { id } = await searchParams;
+  if (typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id))
+    redirect(`/referrals/${id}`);
+  return <ReferralsView />;
 }

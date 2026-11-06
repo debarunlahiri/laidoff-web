@@ -17,6 +17,8 @@ export default function PageHeading() {
       </div>
     );
 
+  if (pathname.startsWith("/referrals/")) return null;
+
   if (pathname === "/notifications")
     return (
       <div className="page-heading">

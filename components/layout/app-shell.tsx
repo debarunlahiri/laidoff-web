@@ -11,6 +11,9 @@ import PageHeading from "@/components/layout/page-heading";
 import RightRail from "@/components/layout/right-rail";
 import Sidebar from "@/components/layout/sidebar";
 import Topbar from "@/components/layout/topbar";
+import VerifyEmailBanner from "@/components/layout/verify-email-banner";
+import ConnectionBanner from "@/components/layout/connection-banner";
+import VerifyPrompt from "@/components/auth/verify-prompt";
 import BottomNav from "@/components/layout/bottom-nav";
 import Toast from "@/components/ui/toast";
 import { usePlatform } from "@/providers/platform-provider";
@@ -62,6 +65,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
       <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
       <div className="workspace">
+        <ConnectionBanner />
+        <VerifyEmailBanner />
         <Topbar />
         <div
           className={`page-layout${showRightRail ? "" : " page-layout-without-rail"}${section === "Messages" || section === "Search" ? " page-layout-wide" : ""}`}
@@ -79,6 +84,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <NoteDialog />
       <PostReportDialog />
       <SignInDialog />
+      <VerifyPrompt />
       <BottomNav />
       <MessagingDock />
       <Toast />

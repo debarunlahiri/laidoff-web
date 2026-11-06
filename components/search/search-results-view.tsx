@@ -11,8 +11,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Skeleton from "@/components/ui/skeleton";
 import ResultGroup from "./result-group";
 import SearchSection from "./search-section";
-import SearchTabs, { searchTabs, type SearchTab } from "./search-tabs";
+import PillTabs from "@/components/ui/pill-tabs";
 import { searchHref } from "./suggestions";
+
+type SearchTab = SearchGroup | "all";
+
+const searchTabs: { key: SearchTab; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "users", label: "People" },
+  { key: "posts", label: "Posts" },
+  { key: "referrals", label: "Referrals" },
+  { key: "companies", label: "Companies" },
+  { key: "topics", label: "Topics" },
+];
 
 const groupTitles: Record<SearchGroup, string> = {
   users: "People",
@@ -123,11 +134,20 @@ export default function SearchResultsView() {
       <div className="section-bar">
         <h2>Results for “{query}”</h2>
       </div>
-      <SearchTabs active={tab} onChange={go} />
+      <PillTabs
+        label="Result types"
+        items={searchTabs}
+        active={tab}
+        onChange={go}
+      />
       {tab === "all" ? (
         <AllResults query={query} onSeeAll={go} />
       ) : (
-        <GroupResults query={query} group={tab} />
+        <GroupResults
+          key={JSON.stringify([tab, query])}
+          query={query}
+          group={tab}
+        />
       )}
     </>
   );

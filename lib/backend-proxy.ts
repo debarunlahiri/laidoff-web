@@ -14,6 +14,7 @@ const roots = new Set([
   "daily-reminder",
   "search",
   "ws-ticket",
+  "admin",
 ]);
 const backendBase = () =>
   (process.env.BACKEND_API_URL ?? "http://127.0.0.1:9090/api/v1").replace(

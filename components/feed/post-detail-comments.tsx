@@ -1,12 +1,13 @@
 "use client";
 import CommentForm from "@/components/feed/comment-form";
 import CommentItem from "@/components/feed/comment-item";
-import SelectField from "@/components/ui/select-field";
+import Popover from "@/components/ui/popover";
 import { useApiList } from "@/hooks/use-api-resource";
 import { useCommentActions } from "@/hooks/use-comment-actions";
 import type { ApiComment } from "@/lib/api-types";
 import { usePlatform } from "@/providers/platform-provider";
 import type { Post } from "@/types";
+import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 
 const sorts = [
@@ -37,22 +38,41 @@ export default function PostDetailComments({ post }: { post: Post }) {
         <h2>
           {post.comments} {post.comments === 1 ? "comment" : "comments"}
         </h2>
-        <div className="comments-controls">
-          <SelectField
-            label="Show"
-            placeholder="All comments"
-            value={filter}
-            options={filters}
-            onChange={setFilter}
-          />
-          <SelectField
-            label="Sort by"
-            placeholder="Oldest first"
-            value={sort}
-            options={sorts}
-            onChange={setSort}
-          />
-        </div>
+        <Popover label="Comment options" icon={<Ellipsis size={20} />}>
+          {(close) => (
+            <>
+              <label>
+                Show
+                <select
+                  value={filter}
+                  onChange={(event) => setFilter(event.target.value)}
+                >
+                  {filters.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Sort by
+                <select
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value)}
+                >
+                  {sorts.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" onClick={close}>
+                Done
+              </button>
+            </>
+          )}
+        </Popover>
       </div>
       <CommentForm
         label="Write a comment"

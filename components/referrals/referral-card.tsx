@@ -9,6 +9,9 @@ import { useAuth } from "@/providers/auth-provider";
 import { useConfirm } from "@/providers/confirm-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import type { ReferralOpportunity } from "@/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { MouseEvent } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -25,7 +28,18 @@ import {
   Users,
 } from "lucide-react";
 
-export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
+export default function ReferralCard({
+  item,
+  full = false,
+}: {
+  item: ReferralOpportunity;
+  full?: boolean;
+}) {
+  const router = useRouter();
+  const referralHref = item.id
+    ? `/referrals/${encodeURIComponent(item.id)}`
+    : null;
+  const previewHref = full ? null : referralHref;
   const { user } = useAuth();
   const {
     setReferralStatus,
@@ -48,10 +62,34 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
     .slice(0, 2)
     .toUpperCase();
 
+  function openReferral(event: MouseEvent<HTMLElement>) {
+    const { target, currentTarget } = event;
+    if (
+      !previewHref ||
+      event.defaultPrevented ||
+      !(target instanceof Element) ||
+      !currentTarget.contains(target) ||
+      target.closest(
+        'a, button, input, select, textarea, label, [role="dialog"], .control-popover',
+      )
+    ) {
+      return;
+    }
+    const selection = window.getSelection();
+    if (
+      selection &&
+      !selection.isCollapsed &&
+      currentTarget.contains(selection.anchorNode)
+    ) {
+      return;
+    }
+    router.push(previewHref);
+  }
+
   // Native share sheet where available, otherwise copy the link.
   async function share() {
-    if (!item.id) return;
-    const url = `${window.location.origin}/referrals?id=${item.id}`;
+    if (!referralHref) return;
+    const url = `${window.location.origin}${referralHref}`;
     try {
       if (navigator.share)
         await navigator.share({
@@ -82,7 +120,10 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
   }
 
   return (
-    <article className={`opportunity card ${closed ? "is-closed" : ""}`}>
+    <article
+      className={`opportunity card${closed ? " is-closed" : ""}${previewHref ? " referral-preview" : ""}`}
+      onClick={previewHref ? openReferral : undefined}
+    >
       <div className="opportunity-top">
         <span className={`company-logo ${item.color}`}>{item.letter}</span>
         <span>
@@ -96,7 +137,17 @@ export default function ReferralCard({ item }: { item: ReferralOpportunity }) {
           {closed ? "Closed" : "Accepting requests"}
         </span>
       </div>
-      <h2>{item.title}</h2>
+      {full ? (
+        <h1 className="referral-detail-title">{item.title}</h1>
+      ) : (
+        <h2>
+          {previewHref ? (
+            <Link href={previewHref}>{item.title}</Link>
+          ) : (
+            item.title
+          )}
+        </h2>
+      )}
       <div className="referral-facts">
         <a
           className="maps-link"

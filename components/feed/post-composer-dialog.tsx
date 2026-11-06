@@ -123,6 +123,10 @@ export default function PostComposerDialog() {
         }}
         onChange={(e) => setDraft(e.target.value)}
       />
+      <small className="subtle-text">
+        Markdown supported. Use **bold**, # headings, or triple backticks for
+        code blocks.
+      </small>
       <PhotoGrid images={postImages} onRemove={removePostImage} />
       {picker.input}
       <button

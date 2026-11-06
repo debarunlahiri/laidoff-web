@@ -3,6 +3,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
+import VerificationRequired from "./verification-required";
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading, sessionError, refreshSession } = useAuth();
   const router = useRouter();
@@ -11,12 +12,15 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     ["/", "/explore", "/referrals", "/network", "/insights"].includes(
       pathname,
     ) ||
+    (pathname.startsWith("/referrals/") && pathname !== "/referrals/new") ||
     pathname.startsWith("/users/") ||
     pathname.startsWith("/search");
   useEffect(() => {
     if (!publicPage && !loading && !user && !sessionError)
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [loading, user, sessionError, pathname, router, publicPage]);
+  // Unverified and past the preview window: nothing but the verification screen.
+  if (user?.verificationExpired) return <VerificationRequired />;
   if (publicPage) return children;
   if (sessionError)
     return (

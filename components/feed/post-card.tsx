@@ -5,6 +5,11 @@ import CommunityNote from "@/components/community-notes/community-note";
 import PostComments from "@/components/feed/post-comments";
 import PostStats from "@/components/feed/post-stats";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { MouseEvent } from "react";
+import Markdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+import remarkHashtags from "@/lib/remark-hashtags";
 import { api, invalidate } from "@/lib/api";
 import Popover from "@/components/ui/popover";
 import Avatar from "@/components/ui/avatar";
@@ -45,6 +50,8 @@ export default function PostCard({
   post: Post;
   full?: boolean;
 }) {
+  const router = useRouter();
+  const postHref = `/posts/${post.id}`;
   const {
     following,
     commentPost,
@@ -72,9 +79,34 @@ export default function PostCard({
     (post.text.length > clampChars ||
       post.text.split("\n").length > clampLines);
 
+  function openPost(event: MouseEvent<HTMLElement>) {
+    const { target, currentTarget } = event;
+    if (
+      event.defaultPrevented ||
+      !(target instanceof Element) ||
+      !currentTarget.contains(target) ||
+      target.closest(
+        'a, button, input, select, textarea, label, [contenteditable], [role="button"], [role="dialog"], .post-actions, .comment-form',
+      )
+    ) {
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (
+      selection &&
+      !selection.isCollapsed &&
+      currentTarget.contains(selection.anchorNode)
+    ) {
+      return;
+    }
+
+    router.push(postHref);
+  }
+
   // Native share sheet where available, otherwise copy the link.
   async function share() {
-    const url = `${window.location.origin}/posts/${post.id}`;
+    const url = `${window.location.origin}${postHref}`;
     try {
       if (navigator.share) await navigator.share({ title: post.name, url });
       else {
@@ -95,7 +127,11 @@ export default function PostCard({
   }
 
   return (
-    <article className="post card" key={post.id}>
+    <article
+      className={`post card${full ? "" : " post-preview"}`}
+      key={post.id}
+      onClick={full ? undefined : openPost}
+    >
       <div className="post-heading">
         <UserLink id={post.authorId}>
           <Avatar
@@ -229,13 +265,45 @@ export default function PostCard({
         {post.open && <span className="open-tag">Open to work</span>}
       </div>
       {post.text && (
-        <p className={`post-copy${clamped ? " is-clamped" : ""}`}>
-          {post.text}
-        </p>
+        <div className={`post-copy${clamped ? " is-clamped" : ""}`}>
+          <Markdown
+            remarkPlugins={[remarkBreaks, remarkHashtags]}
+            allowElement={(element) =>
+              element.tagName !== "img" &&
+              (!clamped ||
+                element.tagName !== "a" ||
+                element.properties.className?.includes("post-hashtag") === true)
+            }
+            components={{
+              a: ({ href, className, children, title }) =>
+                href && className === "post-hashtag" ? (
+                  <Link
+                    className="post-hashtag"
+                    href={href}
+                    prefetch={false}
+                    tabIndex={clamped ? -1 : undefined}
+                  >
+                    {children}
+                  </Link>
+                ) : (
+                  <a href={href} className={className} title={title}>
+                    {children}
+                  </a>
+                ),
+            }}
+            unwrapDisallowed
+          >
+            {post.text}
+          </Markdown>
+        </div>
       )}
-      {clamped && (
-        <Link className="read-more" href={`/posts/${post.id}`}>
-          Read more
+      {!full && (
+        <Link
+          className={clamped ? "read-more" : "sr-only post-preview-link"}
+          href={postHref}
+          aria-label={`${clamped ? "Read more" : "Open post"} by ${post.name}`}
+        >
+          {clamped ? "Read more" : "Open post"}
         </Link>
       )}
       {post.poll && (

@@ -18,6 +18,8 @@ import { useAuth } from "@/providers/auth-provider";
 import { googleSignInAvailable } from "@/lib/firebase";
 import { sectionPaths } from "@/config/navigation";
 import GoogleIcon from "./google-icon";
+import PasswordStrength from "./password-strength";
+import { checkPassword } from "@/lib/password-strength";
 
 function readableError(error: unknown) {
   const code = (error as { code?: string }).code;
@@ -143,6 +145,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
             onSubmit={async (event) => {
               event.preventDefault();
               setError("");
+              if (
+                registering &&
+                !checkPassword(password, { name, email }).strong
+              ) {
+                setError("Please choose a stronger password.");
+                return;
+              }
               if (registering && password !== confirm) {
                 setError("Your passwords don’t match.");
                 return;
@@ -224,6 +233,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                   </button>
                 </div>
               </label>
+              {registering && (
+                <PasswordStrength
+                  password={password}
+                  name={name}
+                  email={email}
+                />
+              )}
               {registering && (
                 <label htmlFor="confirm-password">
                   Confirm password

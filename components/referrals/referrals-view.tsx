@@ -1,4 +1,5 @@
 "use client";
+import PillTabs from "@/components/ui/pill-tabs";
 import ReferralCard from "@/components/referrals/referral-card";
 import ReferralFiltersBar from "@/components/referrals/referral-filters";
 import {
@@ -8,13 +9,12 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import { BriefcaseBusiness } from "lucide-react";
-import Link from "next/link";
 
-const tabs: { view: ReferralView; label: string; personal: boolean }[] = [
-  { view: "all", label: "All", personal: false },
-  { view: "available", label: "Available", personal: true },
-  { view: "mine", label: "My referrals", personal: true },
-  { view: "requested", label: "Requested", personal: true },
+const tabs: { key: ReferralView; label: string; personal: boolean }[] = [
+  { key: "all", label: "All", personal: false },
+  { key: "available", label: "Available", personal: true },
+  { key: "mine", label: "My referrals", personal: true },
+  { key: "requested", label: "Requested", personal: true },
 ];
 
 export default function ReferralsView() {
@@ -26,31 +26,12 @@ export default function ReferralsView() {
 
   return (
     <>
-      {board.sharedId && (
-        <p className="shared-referral-note" role="status">
-          Showing a shared referral.{" "}
-          <Link href="/referrals">View all referrals</Link>
-        </p>
-      )}
-      <div
-        className="discovery-tabs pill-tabs"
-        role="group"
-        aria-label="Referral views"
-      >
-        {tabs
-          .filter((tab) => user || !tab.personal)
-          .map((tab) => (
-            <button
-              type="button"
-              key={tab.view}
-              className={filters.view === tab.view ? "selected" : ""}
-              aria-pressed={filters.view === tab.view}
-              onClick={() => board.setFilters({ view: tab.view })}
-            >
-              {tab.label}
-            </button>
-          ))}
-      </div>
+      <PillTabs
+        label="Referral views"
+        items={tabs.filter((tab) => user || !tab.personal)}
+        active={filters.view}
+        onChange={(view) => board.setFilters({ view })}
+      />
       <ReferralFiltersBar
         filters={filters}
         activeCount={board.activeCount}

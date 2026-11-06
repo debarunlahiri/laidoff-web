@@ -146,6 +146,10 @@ export default function ComposerTrigger() {
               event.target.style.height = `${event.target.scrollHeight}px`;
             }}
           />
+          <small className="subtle-text">
+            Markdown supported. Use **bold**, # headings, or triple backticks
+            for code blocks.
+          </small>
           <PhotoGrid images={postImages} onRemove={removePostImage} />
           {pollOpen && <PollBuilder />}
           <div className="form-row">

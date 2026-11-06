@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, apiMessage } from "@/lib/api";
+import { cacheGet, cacheSet } from "@/lib/cache";
 // Ignore superseded requests without aborting fetch during React effect cleanup.
 type PendingRequest = { cancelled: boolean };
 
@@ -9,10 +10,14 @@ function cancelRequest(request: PendingRequest | null) {
 }
 
 export function useApiResource<T>(path: string | null, initial: T, pollMs = 0) {
-  const [resolvedPath, setResolvedPath] = useState<string | null>(null);
+  // Last known data for this path (if any) is shown immediately and refreshed quietly.
+  const hit = cacheGet<T>(path);
+  const [resolvedPath, setResolvedPath] = useState<string | null>(
+    hit ? path : null,
+  );
   const initialRef = useRef(initial);
-  const [data, setData] = useState(initial);
-  const [loading, setLoading] = useState(Boolean(path));
+  const [data, setData] = useState<T>(hit ? hit.data : initial);
+  const [loading, setLoading] = useState(Boolean(path) && !hit);
   const [error, setError] = useState("");
   const controller = useRef<PendingRequest | null>(null);
   const reload = useCallback(async () => {
@@ -25,25 +30,33 @@ export function useApiResource<T>(path: string | null, initial: T, pollMs = 0) {
       setError("");
       return;
     }
-    setLoading(true);
+    const cached = cacheGet<T>(path);
+    if (cached) {
+      setData(cached.data);
+      setResolvedPath(path);
+      setLoading(false);
+    } else setLoading(true);
     setError("");
     try {
       const result = await api<T>(path);
       if (!active.cancelled) {
         setData(result);
         setResolvedPath(path);
+        cacheSet(path, result);
       }
     } catch (error) {
-      if (!active.cancelled) setError(apiMessage(error));
+      // A failed quiet refresh keeps showing the cached data instead of an error.
+      if (!active.cancelled && !cached) setError(apiMessage(error));
     } finally {
       if (!active.cancelled) setLoading(false);
     }
   }, [path]);
   useEffect(() => {
-    setData(initialRef.current);
+    const cached = cacheGet<T>(path);
+    setData(cached ? cached.data : initialRef.current);
     void reload();
     return () => cancelRequest(controller.current);
-  }, [reload]);
+  }, [reload, path]);
   useEffect(() => {
     const change = (event: Event) => {
       const roots = (event as CustomEvent<string[]>).detail;
@@ -66,29 +79,34 @@ export function useApiResource<T>(path: string | null, initial: T, pollMs = 0) {
     };
   }, [path, reload, pollMs]);
   return {
-    data: resolvedPath === path ? data : initialRef.current,
+    data: resolvedPath === path ? data : hit ? hit.data : initialRef.current,
     setData,
-    loading,
+    loading: hit && resolvedPath !== path ? false : loading,
     error,
     reload,
   };
 }
+type ListEntry<T> = { rows: T[]; hasMore: boolean };
 function itemKey(item: unknown) {
   const row = item as { id?: string; userId?: string };
   return row.id ?? row.userId;
 }
 export function useApiList<T>(path: string | null, pollMs = 0) {
-  const [resolvedPath, setResolvedPath] = useState<string | null>(null);
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(Boolean(path));
+  // The first page of each list is cached so revisiting a screen is instant.
+  const hit = cacheGet<ListEntry<T>>(path);
+  const [resolvedPath, setResolvedPath] = useState<string | null>(
+    hit ? path : null,
+  );
+  const [data, setData] = useState<T[]>(hit ? hit.data.rows : []);
+  const [loading, setLoading] = useState(Boolean(path) && !hit);
   const [error, setError] = useState("");
-  const [hasMore, setHasMore] = useState(false);
+  const [hasMore, setHasMore] = useState(hit ? hit.data.hasMore : false);
   const active = useRef<PendingRequest | null>(null);
-  const rows = useRef<T[]>([]);
+  const rows = useRef<T[]>(hit ? hit.data.rows : []);
   const busy = useRef(false);
   const pageSize = 50;
   const load = useCallback(
-    async (more = false, preserve = false) => {
+    async (more = false, preserve = false, quiet = false) => {
       if (more && busy.current) return;
       if (!path) {
         setData([]);
@@ -102,7 +120,7 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
       const controller: PendingRequest = { cancelled: false };
       active.current = controller;
       busy.current = true;
-      setLoading(true);
+      setLoading(!quiet);
       setError("");
       const offset = more ? rows.current.length : 0;
       try {
@@ -132,9 +150,14 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
           setData(rows.current);
           setResolvedPath(path);
           setHasMore(result.length === pageSize);
+          if (!more)
+            cacheSet(path, {
+              rows: rows.current,
+              hasMore: result.length === pageSize,
+            });
         }
       } catch (error) {
-        if (!controller.cancelled) setError(apiMessage(error));
+        if (!controller.cancelled && !quiet) setError(apiMessage(error));
       } finally {
         if (!controller.cancelled) {
           setLoading(false);
@@ -145,12 +168,14 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
     [path],
   );
   useEffect(() => {
-    rows.current = [];
-    setData([]);
-    setHasMore(false);
-    void load();
+    const cached = cacheGet<ListEntry<T>>(path);
+    rows.current = cached ? cached.data.rows : [];
+    setData(rows.current);
+    setHasMore(cached ? cached.data.hasMore : false);
+    if (cached) setResolvedPath(path);
+    void load(false, false, Boolean(cached));
     return () => cancelRequest(active.current);
-  }, [load]);
+  }, [load, path]);
   useEffect(() => {
     const change = (event: Event) => {
       const roots = (event as CustomEvent<string[]>).detail;
@@ -173,8 +198,8 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
     };
   }, [path, load, pollMs]);
   return {
-    data: resolvedPath === path ? data : [],
-    loading,
+    data: resolvedPath === path ? data : hit ? hit.data.rows : [],
+    loading: hit && resolvedPath !== path ? false : loading,
     error,
     hasMore,
     loadMore: () => load(true),

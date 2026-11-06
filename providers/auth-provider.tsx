@@ -9,7 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api } from "@/lib/api";
+import { api, setVerificationBlocked } from "@/lib/api";
+import { cacheClear } from "@/lib/cache";
 import { googleIdToken } from "@/lib/firebase";
 export type AuthUser = {
   id: string;
@@ -24,6 +25,15 @@ export type AuthUser = {
   profileImageUrl?: string | null;
   coverImageUrl?: string | null;
   googleLinked?: boolean;
+  // false until the member confirms the link we email them.
+  emailVerified?: boolean;
+  // Only ever true for administrators; used to show the Admin link.
+  isAdmin?: boolean;
+  // True while the member still has to verify their email (never for admins).
+  verificationRequired?: boolean;
+  // Unverified members can browse read-only until this time (ISO), then are locked out.
+  emailVerificationDeadline?: string | null;
+  verificationExpired?: boolean;
 };
 export type ProfilePatch = Partial<
   Pick<
@@ -47,6 +57,7 @@ type AuthState = {
   loginGoogle: () => Promise<void>;
   linkGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  resendVerification: () => Promise<void>;
   updateProfile: (patch: ProfilePatch) => Promise<void>;
   // Local-only update after the server already saved (e.g. new photo URLs).
   applyProfile: (patch: Partial<AuthUser>) => void;
@@ -109,6 +120,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshSession();
   }, [refreshSession]);
+  // Cached data and the "must verify" flag belong to whoever is signed in.
+  useEffect(() => {
+    cacheClear();
+  }, [user?.id]);
+  useEffect(() => {
+    setVerificationBlocked(Boolean(user?.verificationRequired));
+  }, [user?.verificationRequired]);
+  // The server says verification is needed (e.g. the preview window just ended).
+  useEffect(() => {
+    const update = () => void refreshSession();
+    window.addEventListener("auth:unverified", update);
+    return () => window.removeEventListener("auth:unverified", update);
+  }, [refreshSession]);
   useEffect(() => {
     const update = () => {
       if (document.visibilityState === "visible") void refreshSession();
@@ -148,6 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser((current) =>
             current ? { ...current, googleLinked: true } : current,
           );
+        },
+        resendVerification: async () => {
+          await authRequest("resend-verification");
         },
         updateProfile: async (patch) => {
           await api("/me", { method: "PATCH", body: patch });

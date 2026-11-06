@@ -4,14 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 export type ConnectionStatus =
   "checking" | "online" | "offline" | "server-down";
 
-export const connectionMessages: Record<
-  Exclude<ConnectionStatus, "checking" | "online">,
-  string
-> = {
-  offline: "You’re offline. Check your internet connection, then try again.",
-  "server-down":
-    "We can’t reach the LayoffCircle server right now. Please try again in a moment.",
-};
+export { connectionMessages } from "@/lib/connection";
 
 // Tests the device's internet and the app server. Rechecks when the browser
 // goes on/offline and every 15 seconds while the page is visible.

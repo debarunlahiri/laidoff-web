@@ -14,6 +14,7 @@ import {
   LogOut,
   Link as LinkIcon,
   Moon,
+  ShieldCheck,
   Sparkles,
   Sun,
 } from "lucide-react";
@@ -118,6 +119,11 @@ export default function AccountMenu() {
           <Link href="/bookmarks" onClick={() => setOpen(false)}>
             <Bookmark size={18} /> Saved posts
           </Link>
+          {user?.isAdmin && (
+            <Link href="/admin" onClick={() => setOpen(false)}>
+              <ShieldCheck size={18} /> Admin
+            </Link>
+          )}
           <button
             onClick={() => {
               setOpen(false);

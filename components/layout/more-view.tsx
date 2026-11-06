@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SiteFooter from "./site-footer";
 
 const tiles = [
   { label: "My network", text: "Network", icon: Users },
@@ -123,6 +124,7 @@ export default function MoreView() {
           </button>
         )}
       </div>
+      <SiteFooter />
     </div>
   );
 }

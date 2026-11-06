@@ -31,6 +31,8 @@ export async function handleAuthRequest(request: NextRequest, action: string) {
       "link-google",
       "logout",
       "session",
+      "verify-email",
+      "resend-verification",
     ].includes(action)
   )
     return jsonError("Not found", 404);
@@ -46,13 +48,18 @@ export async function handleAuthRequest(request: NextRequest, action: string) {
   if (!isSession && request.headers.get("origin") !== expectedOrigin)
     return jsonError("Request origin not allowed", 403);
   const token = request.cookies.get(cookieName)?.value;
-  if (["session", "logout", "link-google"].includes(action) && !token) {
+  if (
+    ["session", "logout", "link-google", "resend-verification"].includes(
+      action,
+    ) &&
+    !token
+  ) {
     if (action === "logout")
       return clearSession(new NextResponse(null, { status: 204 }));
     return jsonError("Please sign in", 401);
   }
   let body;
-  if (!isSession && action !== "logout") {
+  if (!isSession && !["logout", "resend-verification"].includes(action)) {
     const reader = request.body?.getReader();
     const chunks: Uint8Array[] = [];
     let bytes = 0;
@@ -103,7 +110,10 @@ export async function handleAuthRequest(request: NextRequest, action: string) {
         ? clearSession(response)
         : response;
     }
-    if (isSession || action === "link-google")
+    if (
+      isSession ||
+      ["link-google", "verify-email", "resend-verification"].includes(action)
+    )
       return NextResponse.json(payload, {
         headers: { "Cache-Control": "no-store" },
       });

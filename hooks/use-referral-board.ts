@@ -1,6 +1,5 @@
 "use client";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { queryPath } from "@/lib/api";
 import type {
   ApiReferral,
@@ -44,15 +43,12 @@ export const defaultReferralFilters: ReferralFilters = {
 
 // Filters and sorting are applied by the API so paging stays correct.
 export function useReferralBoard() {
-  // A shared link (/referrals?id=...) shows just that referral.
-  const sharedId = useSearchParams().get("id") ?? "";
   const [filters, setFilters] = useState(defaultReferralFilters);
   const typed = useDebouncedValue(
     `${filters.search}\u0000${filters.location}\u0000${filters.skill}`,
   );
   const [search, location, skill] = typed.split("\u0000");
   const path = queryPath("/referrals", {
-    id: sharedId,
     search,
     location,
     skill,
@@ -95,7 +91,6 @@ export function useReferralBoard() {
         view: current.view,
       })),
     items,
-    sharedId,
     activeCount,
     loading: list.loading,
     error: list.error,

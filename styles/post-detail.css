@@ -1,8 +1,71 @@
+.post-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.post-copy > :first-child {
+  margin-top: 0;
+}
+.post-copy > :last-child {
+  margin-bottom: 0;
+}
+.post-copy :is(h1, h2, h3, h4, h5, h6) {
+  margin: 0.85em 0 0.35em;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 1.1em;
+  line-height: 1.35;
+}
+.post-copy :is(h1, h2) {
+  font-size: 1.3em;
+}
+.post-copy :is(p, ul, ol, blockquote, pre) {
+  margin: 0.65em 0;
+}
+.post-copy :is(ul, ol) {
+  padding-inline-start: 1.5em;
+}
+.post-copy blockquote {
+  padding-inline-start: 0.85em;
+  border-inline-start: 3px solid var(--line);
+}
+.post-copy a {
+  text-decoration: underline;
+}
+.post-copy .post-hashtag {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+.post-copy .post-hashtag:is(:hover, :focus-visible) {
+  text-decoration: underline;
+}
+.post-copy :is(pre, :not(pre) > code) {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--mint);
+}
+.post-copy pre {
+  max-width: 100%;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  white-space: pre;
+}
+.post-copy :not(pre) > code {
+  padding: 0.1em 0.3em;
+}
 .post-copy.is-clamped {
   display: -webkit-box;
   -webkit-line-clamp: 7;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.post-preview .post-copy,
+.post-preview .post-tags {
+  cursor: pointer;
+}
+.post-preview:has(.post-preview-link:focus-visible) {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }
 .read-more {
   display: inline-block;
@@ -57,56 +120,8 @@
   font-size: 17px;
   color: var(--ink);
 }
-.comments-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.comments-controls .company-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: auto;
-}
-.comments-controls .company-field > label {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.comments-controls .company-field {
-  flex: none;
-  margin: 0;
-}
-.comments-controls .company-combobox {
-  flex: none;
-  width: 160px;
-  height: 38px;
-  margin: 0;
-}
-.comments-controls .select-trigger {
-  box-sizing: border-box;
-  width: 100%;
-  height: 38px;
-  min-height: 38px;
-  margin: 0;
-  padding: 0 12px;
-  font-size: 13px;
-}
 .post-detail-comments > p {
   margin: 0;
-}
-@media (max-width: 560px) {
-  .comments-controls,
-  .comments-controls .company-field,
-  .comments-controls .company-combobox {
-    width: 100%;
-  }
-  .comments-controls .company-field {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-  }
 }
 .engagement-tabs {
   display: flex;
@@ -169,20 +184,6 @@
   gap: 6px;
   padding: 0;
 }
-.shared-referral-note {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--mint);
-  color: var(--ink);
-  font-size: 13px;
-}
-.shared-referral-note a {
-  color: var(--green);
-  font-weight: 700;
-}
-
 html[data-theme="dark"] .post-stats,
 html[data-theme="dark"] .stat-link {
   color: var(--muted);
@@ -191,10 +192,10 @@ html[data-theme="dark"] .stat-link:hover,
 html[data-theme="dark"] .stat-link:focus-visible {
   color: var(--ink);
 }
-html[data-theme="dark"] .read-more {
+html[data-theme="dark"] .read-more,
+html[data-theme="dark"] .post-copy .post-hashtag {
   color: #7f9bff;
 }
-html[data-theme="dark"] .shared-referral-note,
 html[data-theme="dark"] .engagement-list li {
   border-color: var(--line);
 }
