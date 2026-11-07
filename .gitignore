@@ -5,3 +5,5 @@ out/
 *.tsbuildinfo
 
 !.env.example
+
+!.env*.example
