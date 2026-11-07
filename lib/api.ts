@@ -26,6 +26,31 @@ function announceUnverified(code: string) {
   window.dispatchEvent(new CustomEvent("auth:unverified", { detail: code }));
 }
 
+// The server normally answers JSON, but a proxy, gateway or crashed server can
+// answer with an HTML error page. Never let that surface as a JSON parse error.
+export function statusMessage(status: number) {
+  if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 403) return "You don’t have permission to do that.";
+  if (status === 404) return "We couldn’t find what you were looking for.";
+  if (status === 413) return "That file or message is too large.";
+  if (status === 429) return "Too many requests. Please wait a moment and try again.";
+  if (status >= 500)
+    return "Our servers are having trouble right now. Please try again in a moment.";
+  return "The request failed. Please try again.";
+}
+export async function readJson(
+  response: Response,
+): Promise<{ data: any; valid: boolean }> {
+  if (response.status === 204) return { data: undefined, valid: true };
+  const text = await response.text();
+  if (!text) return { data: undefined, valid: true };
+  try {
+    return { data: JSON.parse(text), valid: true };
+  } catch {
+    return { data: undefined, valid: false };
+  }
+}
+
 type Options = { method?: string; body?: unknown; signal?: AbortSignal };
 async function request<T>(path: string, options: Options): Promise<T> {
   const form = options.body instanceof FormData;
@@ -54,7 +79,17 @@ async function request<T>(path: string, options: Options): Promise<T> {
       "NETWORK",
     );
   }
-  const data = response.status === 204 ? undefined : await response.json();
+  const { data, valid } = await readJson(response);
+  if (!valid) {
+    if (response.status >= 500 || response.ok) reportConnectionFailure();
+    throw new ApiError(
+      response.ok
+        ? connectionMessages["server-down"]
+        : statusMessage(response.status),
+      response.status,
+      "BAD_RESPONSE",
+    );
+  }
   if (!response.ok) {
     if (response.status === 401) {
       window.dispatchEvent(new Event("auth:expired"));
@@ -64,7 +99,7 @@ async function request<T>(path: string, options: Options): Promise<T> {
     if (code === "EMAIL_NOT_VERIFIED" || code === "EMAIL_VERIFICATION_REQUIRED")
       announceUnverified(code);
     throw new ApiError(
-      data?.error?.message ?? "The request failed. Please try again.",
+      data?.error?.message ?? statusMessage(response.status),
       response.status,
       code,
     );

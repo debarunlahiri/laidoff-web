@@ -103,7 +103,18 @@ export async function handleAuthRequest(request: NextRequest, action: string) {
     });
     if (action === "logout")
       return clearSession(new NextResponse(null, { status: 204 }));
-    const payload = await upstream.json();
+    const payload = await upstream.json().catch(() => null);
+    if (payload === null)
+      return NextResponse.json(
+        {
+          error: {
+            code: "BAD_GATEWAY",
+            message:
+              "Our servers are having trouble right now. Please try again in a moment.",
+          },
+        },
+        { status: upstream.ok ? 502 : upstream.status },
+      );
     if (!upstream.ok) {
       const response = NextResponse.json(payload, { status: upstream.status });
       return isSession && upstream.status === 401

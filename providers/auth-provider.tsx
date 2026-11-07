@@ -9,7 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, setVerificationBlocked } from "@/lib/api";
+import {
+  api,
+  readJson,
+  setVerificationBlocked,
+  statusMessage,
+} from "@/lib/api";
 import { cacheClear } from "@/lib/cache";
 import { googleIdToken } from "@/lib/firebase";
 export type AuthUser = {
@@ -70,10 +75,15 @@ async function authRequest(action: string, body?: unknown) {
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
-  const data = response.status === 204 ? null : await response.json();
+  const { data = null } = await readJson(response);
   if (!response.ok)
     throw Object.assign(
-      new Error(data?.error?.message ?? "Unable to sign in. Please try again."),
+      new Error(
+        data?.error?.message ??
+          (response.status >= 500
+            ? statusMessage(response.status)
+            : "Unable to sign in. Please try again."),
+      ),
       { status: response.status },
     );
   return data;
