@@ -36,6 +36,7 @@ type User = {
   isAdmin: boolean;
   emailVerifiedAt: string | null;
   accountStatus: string;
+  warningCount?: number;
   createdAt: string;
   lastLoginAt: string | null;
 };
@@ -234,6 +235,11 @@ export default function UsersPage() {
                   </td>
                   <td>
                     <Badge value={u.accountStatus} />
+                    {!!u.warningCount && (
+                      <small style={{ display: "block", marginTop: 4 }}>
+                        {u.warningCount} warning{u.warningCount === 1 ? "" : "s"}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <Badge
@@ -285,6 +291,12 @@ export default function UsersPage() {
               <p>{detail.headline || "No headline"}</p>
               <div className="ac-badges">
                 <Badge value={detail.accountStatus} />
+                {!!detail.warningCount && (
+                  <Badge
+                    value="warning"
+                    label={`${detail.warningCount} warning${detail.warningCount === 1 ? "" : "s"}`}
+                  />
+                )}
                 <Badge
                   value={detail.emailVerifiedAt ? "verified" : "pending"}
                   label={

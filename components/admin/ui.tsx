@@ -111,6 +111,7 @@ const toneOf: Record<string, string> = {
   succeeded: "good",
   open: "warn",
   pending: "warn",
+  warning: "warn",
   reviewing: "warn",
   user_reported: "warn",
   skipped: "warn",

@@ -13,9 +13,11 @@ export default function WhatsNewDialog({ onClose }: { onClose: () => void }) {
         </button>
       </div>
       <div className="release-notes">
-        {releaseNotes.map((note) => (
+        {releaseNotes.map((note, index) => (
           <section key={note.title}>
-            <small>{note.date}</small>
+            {releaseNotes[index - 1]?.date !== note.date && (
+              <small>{note.date}</small>
+            )}
             <h3>{note.title}</h3>
             <ul>
               {note.items.map((item) => (

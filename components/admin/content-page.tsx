@@ -12,6 +12,7 @@ import { Plus,
   ShieldOff,
   ShieldCheck,
   LogOut,
+  Mail,
   X,
   ExternalLink,
   Eye,
@@ -69,6 +70,8 @@ type Detail = {
   authorId: string;
   authorStatus: string;
   authorIsAdmin: boolean;
+  warningCount: number;
+  warnings: { id: string; reason: string; note: string | null; createdAt: string; postId: string | null; issuedBy: string | null; type: string }[];
   reports: { id: string; category: string; reason: string; status: string; resolutionSummary: string | null; createdAt: string; reporterName: string }[];
   comments: { id: string; text: string; parentId: string | null; createdAt: string; authorName: string }[];
 };
@@ -116,6 +119,92 @@ function stripMd(text: string) {
     .replace(/^[>-]\s+/gm, "")
     .replace(/\n+/g, " ")
     .trim();
+}
+
+const WARN_TYPES: [string, string][] = [
+  ["reminder", "Friendly reminder"],
+  ["warning", "Warning"],
+  ["final", "Final warning"],
+];
+const WARN_REASONS: [string, string][] = [
+  ["language", "Language that doesn’t fit our community"],
+  ["harassment", "Targeting or harassing others"],
+  ["spam", "Spam or unwanted promotion"],
+  ["misleading", "Misleading information"],
+  ["off_topic", "Off-topic content"],
+  ["other", "Community guidelines"],
+];
+
+// Emails the post's author a friendly, polite warning about this post.
+function WarnAuthor({ postId, authorName, count, history, onSent, onDone, onError }: {
+  postId: string;
+  authorName: string;
+  count?: number;
+  history?: Detail["warnings"];
+  onSent: (count: number) => void;
+  onDone: (message: string) => void;
+  onError: (message: string) => void;
+}) {
+  const [type, setType] = useState("warning");
+  const [reason, setReason] = useState("language");
+  const [note, setNote] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  async function send() {
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await api<{ warningCount: number }>(`/admin/posts/${postId}/warn`, { method: "POST", body: { type, reason, note: note.trim() || undefined } });
+      setNote("");
+      onSent(res.warningCount);
+      setResult({ ok: true, text: `Warning emailed to ${authorName}.` });
+      onDone(`Warning emailed to ${authorName}`);
+    } catch (error) {
+      setResult({ ok: false, text: apiMessage(error) });
+      onError("");
+    } finally {
+      setSending(false);
+    }
+  }
+  return (
+    <div className="ac-detail-section">
+      <h3>Warn author {typeof count === "number" && <Badge value={count ? "warning" : "muted"} label={`${count} sent`} />}</h3>
+      <p className="ac-cell-sub" style={{ marginBottom: 8 }}>Sends a polite email about this post with a link to the community guidelines.</p>
+      <label className="ac-detail-row">
+        <span>Type</span>
+        <Dropdown compact value={type} disabled={sending} onChange={(e) => setType(e.target.value)}>
+          {WARN_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </Dropdown>
+      </label>
+      <label className="ac-detail-row">
+        <span>Reason</span>
+        <Dropdown compact value={reason} disabled={sending} onChange={(e) => setReason(e.target.value)}>
+          {WARN_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </Dropdown>
+      </label>
+      <textarea
+        className="ac-input"
+        rows={3}
+        maxLength={1000}
+        placeholder="Add a short note (optional)"
+        value={note}
+        disabled={sending}
+        onChange={(e) => setNote(e.target.value)}
+        style={{ width: "100%", marginTop: 8, resize: "vertical" }}
+      />
+      <div className="ac-row-actions" style={{ marginTop: 8 }}>
+        <button className="ac-btn sm" disabled={sending} onClick={() => void send()}><Mail size={13} /> {sending ? "Sending…" : "Send warning email"}</button>
+      </div>
+      {!!history?.length && (
+        <ul className="ac-cell-sub" style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+          {history.slice(0, 5).map((w) => (
+            <li key={w.id}><strong>{WARN_TYPES.find(([v]) => v === w.type)?.[1] ?? "Warning"}</strong> · {WARN_REASONS.find(([v]) => v === w.reason)?.[1] ?? w.reason} · {ago(w.createdAt)}{w.issuedBy ? ` · by ${w.issuedBy}` : ""}</li>
+          ))}
+        </ul>
+      )}
+      {result && <p className={result.ok ? "ac-cell-sub" : "adm-error"} role="status" style={{ marginTop: 8 }}>{result.text}</p>}
+    </div>
+  );
 }
 
 export default function ContentPage() {
@@ -461,6 +550,7 @@ export default function ContentPage() {
               </div>
             </div>
           )}
+          <WarnAuthor key={preview.id} postId={preview.id} authorName={preview.isAnonymous ? "the author" : preview.authorName} count={detail?.warningCount} history={detail?.warnings} onSent={(n) => setDetail((d) => d && { ...d, warningCount: n })} onDone={() => { flash("Warning emailed"); if (detail) void api<Detail>(`/admin/posts/${detail.id}`).then(setDetail).catch(() => {}); }} onError={setMessage} />
           <div className="ac-detail-section">
             <h3>Comments {detail ? `(${detail.comments.length})` : ""}</h3>
             {!detail && <p className="ac-muted">Loading…</p>}
