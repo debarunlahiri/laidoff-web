@@ -16,7 +16,7 @@ export default function InfoPage({
     <main className="info-page">
       <Link href="/" className="info-page-back">
         <ArrowLeft size={16} aria-hidden="true" />
-        Back to LayoffCircle
+        Back to LaidOffCircle
       </Link>
       <article className="card info-page-content">
         <header>

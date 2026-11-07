@@ -8,7 +8,7 @@ export const connectionMessages: Record<
 > = {
   offline: "You’re offline. Check your internet connection, then try again.",
   "server-down":
-    "We can’t reach the LayoffCircle server right now. Please try again in a moment.",
+    "We can’t reach the LaidOffCircle server right now. Please try again in a moment.",
 };
 
 let state: ConnectionState = "online";

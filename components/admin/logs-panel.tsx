@@ -1,7 +1,9 @@
 "use client";
+import { Dropdown } from "./dropdown";
 import { api, apiMessage, queryPath } from "@/lib/api";
 import { useEffect, useState } from "react";
-import { Pager, when } from "./ui";
+import { useDebounced, when } from "./ui";
+import { InfiniteFooter, useInfiniteList } from "./use-infinite-list";
 
 type Log = {
   id: string;
@@ -16,49 +18,31 @@ const LIMIT = 20;
 export default function LogsPanel() {
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
-  const [offset, setOffset] = useState(0);
-  const [data, setData] = useState<{ total: number; items: Log[] }>({
-    total: 0,
-    items: [],
-  });
-  const [error, setError] = useState("");
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const timer = setTimeout(
-      () =>
-        api<{ total: number; items: Log[] }>(
-          queryPath("/admin/email/logs", {
-            status,
-            search,
-            limit: LIMIT,
-            offset,
-          }),
-        ).then(
-          (r) => (setData(r), setError("")),
-          (e) => setError(apiMessage(e)),
-        ),
-      search ? 300 : 0,
-    );
-    return () => clearTimeout(timer);
-  }, [status, search, offset, tick]);
+  const debouncedSearch = useDebounced(search);
+  const feed = useInfiniteList<Log>(
+    "/admin/email/logs",
+    { status, search: debouncedSearch },
+    LIMIT,
+  );
+  const { data, error } = feed;
   return (
     <div className="adm-card">
       <div className="adm-toolbar">
         <input
           placeholder="Search recipient…"
           value={search}
-          onChange={(e) => (setOffset(0), setSearch(e.target.value))}
+          onChange={(e) => (setSearch(e.target.value))}
         />
-        <select
+        <Dropdown compact
           value={status}
-          onChange={(e) => (setOffset(0), setStatus(e.target.value))}
+          onChange={(e) => (setStatus(e.target.value))}
         >
           <option value="">All statuses</option>
           <option value="sent">Sent</option>
           <option value="failed">Failed</option>
           <option value="skipped">Skipped</option>
-        </select>
-        <button onClick={() => setTick(tick + 1)}>Refresh</button>
+        </Dropdown>
+        <button onClick={feed.reload}>Refresh</button>
       </div>
       {error && <p className="adm-error">{error}</p>}
       <div className="adm-scroll">
@@ -88,12 +72,7 @@ export default function LogsPanel() {
           </tbody>
         </table>
       </div>
-      <Pager
-        total={data.total}
-        offset={offset}
-        limit={LIMIT}
-        onChange={setOffset}
-      />
+      <InfiniteFooter feed={feed} />
     </div>
   );
 }

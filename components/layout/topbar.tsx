@@ -1,7 +1,15 @@
 "use client";
 import AccountMenu from "@/components/layout/account-menu";
 import { usePlatform } from "@/providers/platform-provider";
-import { ArrowRight, Bell, Menu, Search, UserPlus, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Bell,
+  Menu,
+  Search,
+  UserPlus,
+  X,
+} from "lucide-react";
 
 import SearchBox from "@/components/search/search-box";
 import { Suspense, useEffect, useRef } from "react";
@@ -71,8 +79,15 @@ export default function Topbar() {
     };
   }, [notifications]);
 
+  // Detail pages put their "back" link in the header, not in the page body.
+  const back = pathname.startsWith("/posts/")
+    ? { href: "/", label: "Back to feed" }
+    : pathname.startsWith("/referrals/")
+      ? { href: "/referrals", label: "Back to referrals" }
+      : null;
+
   return (
-    <header className="topbar">
+    <header className={`topbar${back ? " has-back" : ""}`}>
       <button
         className="icon-button mobile-menu"
         aria-label="Open navigation"
@@ -80,13 +95,19 @@ export default function Topbar() {
       >
         <Menu />
       </button>
+      {back && (
+        <Link className="topbar-back" href={back.href} aria-label={back.label}>
+          <ArrowLeft size={18} />
+          <span>{back.label}</span>
+        </Link>
+      )}
       <Suspense
         fallback={
           <label className="search-box topbar-search">
             <Search size={17} />
             <input
               aria-label="Search the community"
-              placeholder="Search LayoffCircle"
+              placeholder="Search LaidOffCircle"
               disabled
             />
           </label>

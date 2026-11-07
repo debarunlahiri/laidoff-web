@@ -124,9 +124,16 @@ export function useMessages(
         method: "POST",
         body: { userId },
       });
+      invalidate("conversations");
+      // Anywhere but the inbox, the chat opens in the floating dock window.
+      if (!window.location.pathname.startsWith("/messages")) {
+        window.dispatchEvent(
+          new CustomEvent("dock:open-chat", { detail: result.id }),
+        );
+        return;
+      }
       setSelected(result.id);
       navigate("Messages");
-      invalidate("conversations");
     } catch (error) {
       notify(apiMessage(error));
     }

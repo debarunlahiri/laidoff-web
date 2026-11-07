@@ -429,3 +429,49 @@
   width: 44px;
   height: 44px;
 }
+
+/* ---- Hide the dock to the side ---- */
+.msg-dock-top {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line);
+}
+.msg-dock-top > .msg-dock-header {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+}
+.msg-dock.collapsed .msg-dock-top { border-bottom: 0; }
+.msg-dock-hide {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  background: var(--white);
+  color: var(--muted);
+  cursor: pointer;
+}
+.msg-dock-hide:hover { background: var(--mint); color: var(--ink); }
+.msg-dock-tab {
+  position: fixed;
+  right: 0;
+  bottom: 24px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 8px;
+  border: 1px solid var(--line);
+  border-right: 0;
+  border-radius: 14px 0 0 14px;
+  background: var(--white);
+  color: var(--muted);
+  box-shadow: -4px 4px 18px rgba(15, 23, 42, 0.16);
+  cursor: pointer;
+  animation: rise-in 200ms ease both;
+}
+.msg-dock-tab:hover { color: var(--ink); }
+.msg-dock-tab .msg-count { position: absolute; top: -8px; left: 6px; }
+.msg-dock-windows.tucked { right: 70px; }
+@media (max-width: 700px) {
+  .msg-dock-tab { bottom: calc(76px + env(safe-area-inset-bottom)); }
+}

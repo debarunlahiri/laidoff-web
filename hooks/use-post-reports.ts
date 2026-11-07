@@ -3,7 +3,12 @@ import { useState } from "react";
 import { api, apiMessage, invalidate } from "@/lib/api";
 import { useApiResource } from "./use-api-resource";
 
-export type ReportCategory = { value: string; label: string };
+export type ReportCategory = {
+  value: string;
+  label: string;
+  icon?: string;
+  subcategories?: { value: string; label: string }[];
+};
 
 export function usePostReports(notify: (message: string) => void) {
   const [reportPostId, setReportPostId] = useState<string | null>(null);
@@ -14,13 +19,17 @@ export function usePostReports(notify: (message: string) => void) {
     [],
   );
 
-  async function submitPostReport(category: string, reason: string) {
+  async function submitPostReport(
+    category: string,
+    reason: string,
+    subcategory?: string,
+  ) {
     if (!reportPostId || saving) return;
     setSaving(true);
     try {
       await api(`/posts/${reportPostId}/reports`, {
         method: "POST",
-        body: { category, reason: reason.trim() },
+        body: { category, subcategory: subcategory || undefined, reason: reason.trim() },
       });
       setReportPostId(null);
       invalidate("posts");

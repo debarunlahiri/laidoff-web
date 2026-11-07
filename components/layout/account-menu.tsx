@@ -35,7 +35,7 @@ export default function AccountMenu() {
   useEffect(() => {
     try {
       setUnseen(
-        localStorage.getItem("layoffcircle:whatsnew") !== latestRelease,
+        localStorage.getItem("laidoffcircle:whatsnew") !== latestRelease,
       );
     } catch {}
   }, []);
@@ -130,7 +130,7 @@ export default function AccountMenu() {
               setNotes(true);
               setUnseen(false);
               try {
-                localStorage.setItem("layoffcircle:whatsnew", latestRelease);
+                localStorage.setItem("laidoffcircle:whatsnew", latestRelease);
               } catch {}
             }}
           >

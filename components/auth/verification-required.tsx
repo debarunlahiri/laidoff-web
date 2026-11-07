@@ -42,7 +42,7 @@ export default function VerificationRequired() {
         <MailCheck className="verify-bad" size={44} />
         <h2>Verify your email to continue</h2>
         <p>
-          Your free preview of LayoffCircle has ended. Confirm{" "}
+          Your free preview of LaidOffCircle has ended. Confirm{" "}
           <strong>{user?.email}</strong> to get back in. We sent you a link when
           you signed up. Open it, then come back here.
         </p>

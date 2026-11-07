@@ -770,3 +770,51 @@
     display: none;
   }
 }
+
+.referral-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.referral-links a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--green); font-size: 13px; font-weight: 600; text-decoration: none; }
+.referral-links a:hover { background: var(--mint); }
+
+.company-create { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--green); font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; }
+.company-create:hover:not(:disabled) { background: var(--mint); }
+.company-create:disabled { opacity: 0.6; cursor: progress; }
+
+a.skill-chip.linked { text-decoration: none; cursor: pointer; transition: background 0.12s ease, transform 0.12s ease; }
+a.skill-chip.linked:hover { background: #d5defa; transform: translateY(-1px); }
+a.skill-chip.linked:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+/* ---- Filter panel alignment ---- */
+.referral-filter-panel > * {
+  min-width: 0;
+}
+.referral-filter-panel .referral-filter-company {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.referral-filter-panel .location-field,
+.referral-filter-panel .location-input {
+  min-width: 0;
+  max-width: 100%;
+}
+.referral-filter-panel .location-input input {
+  text-overflow: ellipsis;
+}
+.referral-filter-panel .company-field {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #5a6477;
+}
+.referral-filter-panel .company-field .company-combobox {
+  margin-top: 0;
+}
+.referral-filter-panel .company-field .company-combobox > input[role="combobox"] {
+  height: 40px;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-radius: 8px;
+  border-color: var(--line);
+  color: var(--ink);
+  font-size: 13px;
+}

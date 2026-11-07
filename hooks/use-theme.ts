@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
-const key = "layoffcircle:theme";
+const key = "laidoffcircle:theme";
 
 // Reads the theme the inline script already applied, and lets the user flip it.
 export function useTheme() {

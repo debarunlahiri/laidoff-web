@@ -45,6 +45,13 @@ export function useCommentActions(
           body: { text, parentId, uploadId },
         });
       }),
+    edit: (commentId: string, text: string) =>
+      run(() =>
+        api(`/posts/${postId}/comments/${commentId}`, {
+          method: "PATCH",
+          body: { text },
+        }),
+      ),
     react: (comment: ApiComment, reaction: "like" | "dislike") =>
       run(() =>
         api(`/posts/${postId}/comments/${comment.id}/reaction`, {

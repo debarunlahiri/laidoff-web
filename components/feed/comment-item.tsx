@@ -2,7 +2,7 @@
 import CommentForm from "@/components/feed/comment-form";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
-import { displayDate, initials } from "@/lib/api";
+import { displayDate, displayTime, initials } from "@/lib/api";
 import type { ApiComment } from "@/lib/api-types";
 import { usePlatform } from "@/providers/platform-provider";
 import CommentReportDialog from "@/components/feed/comment-report-dialog";
@@ -10,6 +10,7 @@ import PostImages from "@/components/feed/post-images";
 import { mediaUrl } from "@/lib/api";
 import {
   Flag,
+  Pencil,
   MessageCircle,
   Share2,
   ThumbsDown,
@@ -20,6 +21,7 @@ import { useState } from "react";
 type Actions = {
   pending: boolean;
   post: (text: string, parentId?: string, file?: File) => Promise<boolean>;
+  edit: (commentId: string, text: string) => Promise<boolean>;
   react: (
     comment: ApiComment,
     reaction: "like" | "dislike",
@@ -45,12 +47,18 @@ export default function CommentItem({
 }) {
   const { notify, currentUser } = usePlatform();
   const [reporting, setReporting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.text);
+  const canSave =
+    !actions.pending &&
+    draft.trim() !== comment.text &&
+    (Boolean(draft.trim()) || Boolean(comment.media));
   const [showReplies, setShowReplies] = useState(true);
   const replies = comment.replies ?? [];
   const replying = replyingTo === comment.id;
 
   async function share() {
-    const text = `“${comment.text}” — ${comment.name} on LayoffCircle`;
+    const text = `“${comment.text}” — ${comment.name} on LaidOffCircle`;
     try {
       if (navigator.share) {
         await navigator.share({ text, url: window.location.origin });
@@ -83,8 +91,51 @@ export default function CommentItem({
             <time dateTime={comment.createdAt}>
               {displayDate(comment.createdAt)}
             </time>
+            {comment.editedAt && (
+              <span
+                className="edited-mark"
+                title={`Edited ${displayDate(comment.editedAt)} · ${displayTime(comment.editedAt)}`}
+              >
+                · Edited
+              </span>
+            )}
           </div>
-          {comment.text && <p>{comment.text}</p>}
+          {editing ? (
+            <div className="comment-edit">
+              <textarea
+                autoFocus
+                aria-label="Edit your comment"
+                maxLength={5000}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setEditing(false);
+                }}
+              />
+              <div className="comment-edit-row">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setEditing(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={!canSave}
+                  onClick={async () => {
+                    if (await actions.edit(comment.id, draft.trim()))
+                      setEditing(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            comment.text && <p>{comment.text}</p>
+          )}
           {comment.media && (
             <div className="comment-media">
               <PostImages
@@ -121,6 +172,16 @@ export default function CommentItem({
           <button onClick={() => void share()}>
             <Share2 size={14} /> Share
           </button>
+          {currentUser?.id === comment.authorId && (
+            <button
+              onClick={() => {
+                setDraft(comment.text);
+                setEditing(true);
+              }}
+            >
+              <Pencil size={14} /> Edit
+            </button>
+          )}
           {currentUser?.id !== comment.authorId && (
             <button onClick={() => setReporting(true)}>
               <Flag size={14} /> Report

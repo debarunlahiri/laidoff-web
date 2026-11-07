@@ -9,6 +9,7 @@ export default function TrendingTopics() {
   const result = useApiResource<{ topic: string; posts: number }[]>(
     "/posts/topics",
     [],
+    45000,
   );
   return (
     <section className="rail-trending">

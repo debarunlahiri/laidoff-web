@@ -2,14 +2,14 @@ import InfoPage from "@/components/layout/info-page";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Community guidelines | LayoffCircle",
+  title: "Community guidelines | LaidOffCircle",
 };
 
 export default function CommunityGuidelinesPage() {
   return (
     <InfoPage
       title="Community guidelines"
-      intro="Help make LayoffCircle a place where people can ask for help and share difficult experiences."
+      intro="Help make LaidOffCircle a place where people can ask for help and share difficult experiences."
     >
       <section>
         <h2>Treat people with respect</h2>

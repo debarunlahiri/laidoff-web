@@ -223,6 +223,8 @@ export default function ReferralFiltersBar({
           </label>
           <div className="referral-filter-company">
             <CompanyAutocomplete
+              label="Company"
+              placeholder="Any company"
               value={filters.companyId}
               onChange={(companyId) => onChange({ companyId })}
             />

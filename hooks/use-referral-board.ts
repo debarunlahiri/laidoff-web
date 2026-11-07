@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { queryPath } from "@/lib/api";
 import type {
   ApiReferral,
@@ -43,7 +44,25 @@ export const defaultReferralFilters: ReferralFilters = {
 
 // Filters and sorting are applied by the API so paging stays correct.
 export function useReferralBoard() {
-  const [filters, setFilters] = useState(defaultReferralFilters);
+  const router = useRouter();
+  const pathname = usePathname();
+  // Skill chips on a referral link here as /referrals?skill=React.
+  const urlSkill = useSearchParams().get("skill") ?? "";
+  const [filters, setFilters] = useState({
+    ...defaultReferralFilters,
+    skill: urlSkill,
+  });
+  useEffect(() => {
+    // Only a new ?skill= from a chip click changes the filter; clearing it never does.
+    if (!urlSkill) return;
+    setFilters((current) =>
+      current.skill === urlSkill
+        ? current
+        : { ...current, skill: urlSkill, view: "all" },
+    );
+  }, [urlSkill]);
+  // Dropping the skill filter also drops it from the address bar.
+  const forgetUrlSkill = () => urlSkill && router.replace(pathname);
   const typed = useDebouncedValue(
     `${filters.search}\u0000${filters.location}\u0000${filters.skill}`,
   );
@@ -83,13 +102,18 @@ export function useReferralBoard() {
   ].filter(Boolean).length;
   return {
     filters,
-    setFilters: (patch: Partial<ReferralFilters>) =>
-      setFilters((current) => ({ ...current, ...patch })),
-    reset: () =>
+    setFilters: (patch: Partial<ReferralFilters>) => {
+      if (patch.skill !== undefined && patch.skill !== urlSkill)
+        forgetUrlSkill();
+      setFilters((current) => ({ ...current, ...patch }));
+    },
+    reset: () => {
+      forgetUrlSkill();
       setFilters((current) => ({
         ...defaultReferralFilters,
         view: current.view,
-      })),
+      }));
+    },
     items,
     activeCount,
     loading: list.loading,

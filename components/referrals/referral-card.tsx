@@ -9,13 +9,16 @@ import { useAuth } from "@/providers/auth-provider";
 import { useConfirm } from "@/providers/confirm-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import type { ReferralOpportunity } from "@/types";
+import RichText from "@/components/ui/rich-text";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
 import {
   ArrowUpRight,
+  Building2,
   Check,
   Clock,
+  ExternalLink,
   FileText,
   Globe2,
   Layers,
@@ -40,6 +43,12 @@ export default function ReferralCard({
     ? `/referrals/${encodeURIComponent(item.id)}`
     : null;
   const previewHref = full ? null : referralHref;
+  // Long write-ups collapse in the list and show in full on the referral page.
+  const descClamped =
+    !full &&
+    Boolean(item.description) &&
+    ((item.description ?? "").length > 320 ||
+      (item.description ?? "").split("\n").length > 6);
   const { user } = useAuth();
   const {
     setReferralStatus,
@@ -190,9 +199,14 @@ export default function ReferralCard({
           .map((skill) => skill.trim())
           .filter(Boolean)
           .map((skill) => (
-            <span className="skill-chip static" key={skill}>
+            <Link
+              className="skill-chip static linked"
+              key={skill}
+              href={`/referrals?skill=${encodeURIComponent(skill)}`}
+              title={`See referrals that need ${skill}`}
+            >
               {skill}
-            </span>
+            </Link>
           ))}
         {item.minExperience ? (
           <span className="skill-chip static years">
@@ -201,7 +215,30 @@ export default function ReferralCard({
         ) : null}
       </div>
       {item.description && (
-        <p className="referral-description">{item.description}</p>
+        <div
+          className={`post-copy referral-description${descClamped ? " is-clamped" : ""}`}
+        >
+          <RichText text={item.description} clamped={descClamped} />
+        </div>
+      )}
+      {descClamped && referralHref && (
+        <Link className="read-more" href={referralHref}>
+          Read more
+        </Link>
+      )}
+      {(item.jobLink || item.companyLink) && (
+        <p className="referral-links">
+          {item.jobLink && (
+            <a href={item.jobLink} target="_blank" rel="noopener noreferrer nofollow ugc">
+              <FileText size={14} /> Job description <ExternalLink size={12} />
+            </a>
+          )}
+          {item.companyLink && (
+            <a href={item.companyLink} target="_blank" rel="noopener noreferrer nofollow ugc">
+              <Building2 size={14} /> Company page <ExternalLink size={12} />
+            </a>
+          )}
+        </p>
       )}
       {asks > 0 && (
         <p className="referral-asks">

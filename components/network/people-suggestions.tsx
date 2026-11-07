@@ -2,11 +2,12 @@
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
 import { usePlatform } from "@/providers/platform-provider";
-import { ArrowRight, Check, UserPlus, Users } from "lucide-react";
+import ConnectButton from "@/components/network/connect-button";
+import { ArrowRight, Users } from "lucide-react";
 
 export default function PeopleSuggestions() {
-  const { people, connected, toggleConnection, navigate, networkPending } =
-    usePlatform();
+  const { suggestedPeople, navigate } = usePlatform();
+  const people = suggestedPeople;
 
   return (
     <section className="card rail-card">
@@ -15,6 +16,9 @@ export default function PeopleSuggestions() {
         <Users size={17} />
       </div>
       <p className="rail-subtitle">A new connection can change everything.</p>
+      {!people.length && (
+        <p className="rail-subtitle">You’re connected with everyone here.</p>
+      )}
       {people.slice(0, 3).map((person) => (
         <div className="suggestion" key={person.id}>
           <UserLink id={person.id}>
@@ -30,18 +34,7 @@ export default function PeopleSuggestions() {
               {person.detail && <small>{person.detail}</small>}
             </div>
           </UserLink>
-          <button
-            aria-label={`Connect with ${person.name}`}
-            className={`connect-icon ${connected.includes(person.id ?? "") ? "connected" : ""}`}
-            disabled={!person.id || networkPending.includes(person.id)}
-            onClick={() => person.id && toggleConnection(person.id)}
-          >
-            {connected.includes(person.id ?? "") ? (
-              <Check size={15} />
-            ) : (
-              <UserPlus size={15} />
-            )}
-          </button>
+          <ConnectButton personId={person.id} iconOnly />
         </div>
       ))}
       <button className="rail-link" onClick={() => navigate("My network")}>

@@ -16,6 +16,8 @@ import { apiMessage } from "@/lib/api";
 import { usePlatform } from "@/providers/platform-provider";
 import { useImageDrop } from "@/hooks/use-image-drop";
 import { requireSignIn } from "@/lib/api";
+import MarkdownEditor from "@/components/ui/markdown-editor";
+import QuotedPost from "@/components/feed/quoted-post";
 import PollBuilder from "@/components/feed/poll-builder";
 import { ArrowRight, BarChart3, Earth, ImagePlus, X } from "lucide-react";
 
@@ -24,6 +26,7 @@ export default function PostComposerDialog() {
     currentUser,
     composer,
     setComposer,
+    quoting,
     draft,
     setDraft,
     topic,
@@ -71,7 +74,7 @@ export default function PostComposerDialog() {
         </div>
       )}
       <div className="modal-heading">
-        <h2>Share with your circle</h2>
+        <h2>{quoting ? "Quote this post" : "Share with your circle"}</h2>
         <button
           className="icon-button"
           aria-label="Close composer"
@@ -99,14 +102,19 @@ export default function PostComposerDialog() {
           </small>
         </span>
       </div>
-      <textarea
+      <MarkdownEditor
         autoFocus
+        ariaLabel="Post text"
+        maxLength={20000}
         placeholder={
-          pollOpen
-            ? "Ask your question…"
-            : "Your story, a question, a little encouragement…"
+          quoting
+            ? "Add your thoughts…"
+            : pollOpen
+              ? "Ask your question…"
+              : "Your story, a question, a little encouragement…"
         }
         value={draft}
+        onChange={setDraft}
         onPaste={async (event) => {
           const pasted = pastedImages(event);
           if (!pasted.length) return;
@@ -121,13 +129,27 @@ export default function PostComposerDialog() {
             notify(apiMessage((failed as PromiseRejectedResult).reason));
           if (good.length) addPostImages(good);
         }}
-        onChange={(e) => setDraft(e.target.value)}
       />
       <small className="subtle-text">
-        Markdown supported. Use **bold**, # headings, or triple backticks for
-        code blocks.
+        Format with the toolbar or Markdown: **bold**, ## headings, lists,
+        tables and links.
       </small>
       <PhotoGrid images={postImages} onRemove={removePostImage} />
+      {quoting && (
+        <QuotedPost
+          asLink={false}
+          post={{
+            id: quoting.id,
+            text: quoting.text,
+            topic: quoting.topic,
+            createdAt: quoting.createdAt ?? "",
+            anonymous: !quoting.authorId,
+            authorId: quoting.authorId ?? null,
+            name: quoting.name,
+            image: null,
+          }}
+        />
+      )}
       {picker.input}
       <button
         type="button"
@@ -137,15 +159,17 @@ export default function PostComposerDialog() {
       >
         <AddPhotosLabel count={postImages.length} />
       </button>
-      <button
-        type="button"
-        className="text-button"
-        aria-pressed={pollOpen}
-        onClick={() => setPollOpen(!pollOpen)}
-      >
-        <BarChart3 size={16} /> {pollOpen ? "Remove poll" : "Add poll"}
-      </button>
-      {pollOpen && <PollBuilder />}
+      {!quoting && (
+        <button
+          type="button"
+          className="text-button"
+          aria-pressed={pollOpen}
+          onClick={() => setPollOpen(!pollOpen)}
+        >
+          <BarChart3 size={16} /> {pollOpen ? "Remove poll" : "Add poll"}
+        </button>
+      )}
+      {pollOpen && !quoting && <PollBuilder />}
       <div className="form-row">
         <SelectField
           label="Topic (optional)"
@@ -174,7 +198,7 @@ export default function PostComposerDialog() {
           disabled={!canPublish || postSaving}
           onClick={publish}
         >
-          Publish post <ArrowRight size={16} />
+          {quoting ? "Post quote" : "Publish post"} <ArrowRight size={16} />
         </button>
       </div>
     </Dialog>

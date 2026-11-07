@@ -23,14 +23,19 @@ import { usePathname } from "next/navigation";
 export default function AppShell({ children }: { children: ReactNode }) {
   const { section } = usePlatform();
   const pathname = usePathname();
-  const showRightRail = section === "Home";
+  // The side panels (daily reminder, people, referrals…) belong to the home feed
+  // only. A single post (also reported as "Home") reads better full width.
+  const showRightRail = section === "Home" && pathname === "/";
+  const readingPage =
+    pathname.startsWith("/posts/") ||
+    (pathname.startsWith("/referrals/") && pathname !== "/referrals/new");
   const [collapsed, setCollapsed] = useState(false);
 
   // Remember the choice per viewer; storage can be blocked, so guard it.
   useEffect(() => {
     try {
       setCollapsed(
-        localStorage.getItem("layoffcircle:sidebar") === "collapsed",
+        localStorage.getItem("laidoffcircle:sidebar") === "collapsed",
       );
     } catch {}
   }, []);
@@ -53,7 +58,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     setCollapsed((current) => {
       try {
         localStorage.setItem(
-          "layoffcircle:sidebar",
+          "laidoffcircle:sidebar",
           current ? "expanded" : "collapsed",
         );
       } catch {}
@@ -69,7 +74,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <VerifyEmailBanner />
         <Topbar />
         <div
-          className={`page-layout${showRightRail ? "" : " page-layout-without-rail"}${section === "Messages" || section === "Search" ? " page-layout-wide" : ""}`}
+          className={`page-layout${showRightRail ? "" : " page-layout-without-rail"}${section === "Messages" || section === "Search" ? " page-layout-wide" : ""}${readingPage ? " page-layout-reading" : ""}`}
         >
           <main key={pathname} className="page-transition">
             <PageHeading />

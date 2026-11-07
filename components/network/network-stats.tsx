@@ -37,12 +37,12 @@ export default function NetworkStats({ stats }: { stats: Stats }) {
     <section className="network-stats" aria-label="Your network">
       {items.map(({ label, value, icon: Icon, tone }) => (
         <div className="card network-stat" key={label}>
+          <span className="stat-text">
+            <small>{label}</small>
+            <strong>{value.toLocaleString()}</strong>
+          </span>
           <span className={`stat-chip ${tone}`}>
             <Icon size={20} aria-hidden="true" />
-          </span>
-          <span className="stat-text">
-            <strong>{value.toLocaleString()}</strong>
-            <small>{label}</small>
           </span>
         </div>
       ))}

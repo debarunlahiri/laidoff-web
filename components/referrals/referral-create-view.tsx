@@ -1,4 +1,5 @@
 "use client";
+import MarkdownEditor from "@/components/ui/markdown-editor";
 import ReferralFieldBuilder, {
   type DraftField,
 } from "@/components/referrals/referral-field-builder";
@@ -14,7 +15,6 @@ import type {
 import { levelLabels, workModeLabels } from "@/lib/referral-meta";
 import { usePlatform } from "@/providers/platform-provider";
 import {
-  ArrowLeft,
   BriefcaseBusiness,
   Globe2,
   Layers,
@@ -34,6 +34,20 @@ const starterFields: DraftField[] = [
   },
 ];
 
+// "company.com/jobs" becomes "https://company.com/jobs"; blank stays blank.
+const validLink = (value: string) => {
+  if (!value.trim()) return true;
+  try {
+    return Boolean(new URL(toWebLink(value)).hostname.includes("."));
+  } catch {
+    return false;
+  }
+};
+const toWebLink = (value: string) => {
+  const link = value.trim();
+  return !link || /^https?:\/\//i.test(link) ? link : `https://${link}`;
+};
+
 // A full page (not a dialog): the form is long and has a live preview.
 export default function ReferralCreateView() {
   const router = useRouter();
@@ -46,6 +60,8 @@ export default function ReferralCreateView() {
   const [years, setYears] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [description, setDescription] = useState("");
+  const [companyLink, setCompanyLink] = useState("");
+  const [jobLink, setJobLink] = useState("");
   const [requestFields, setRequestFields] = useState(starterFields);
   const companyInfo = useApiResource<ApiCompany | null>(
     company ? `/companies/${company}` : null,
@@ -57,14 +73,13 @@ export default function ReferralCreateView() {
     !title.trim() && "Enter a job title",
     !place && "Add a location (or choose Remote)",
     !skills.length && "Add at least one skill",
+    !validLink(companyLink) && "Company link isn’t a valid web address",
+    !validLink(jobLink) && "Job description link isn’t a valid web address",
   ].filter(Boolean) as string[];
   const valid = missing.length === 0;
 
   return (
     <div className="referral-create">
-      <Link className="back-link" href="/referrals">
-        <ArrowLeft size={15} /> Back to referrals
-      </Link>
       <form
         className="referral-create-layout"
         onSubmit={async (event) => {
@@ -76,6 +91,8 @@ export default function ReferralCreateView() {
               location: place,
               skills: skills.join(", "),
               description,
+              companyLink: toWebLink(companyLink),
+              jobLink: toWebLink(jobLink),
               workMode,
               level: level || null,
               minExperience: years === "" ? null : Number(years),
@@ -180,11 +197,38 @@ export default function ReferralCreateView() {
             </div>
             <label className="field-label">
               Additional details (optional)
-              <textarea
-                maxLength={3000}
+              <MarkdownEditor
+                ariaLabel="Additional details"
+                maxLength={10000}
+                rows={7}
                 placeholder="About the team, the role, and how you can help with a referral…"
                 value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                onChange={setDescription}
+              />
+              <small className="subtle-text">
+                Markdown supported: headings, lists, tables and links.
+              </small>
+            </label>
+            <label className="field-label">
+              Job description link (optional)
+              <input
+                type="text"
+                inputMode="url"
+                maxLength={2048}
+                placeholder="https://company.com/jobs/123"
+                value={jobLink}
+                onChange={(event) => setJobLink(event.target.value)}
+              />
+            </label>
+            <label className="field-label">
+              Company link (optional)
+              <input
+                type="text"
+                inputMode="url"
+                maxLength={2048}
+                placeholder="https://company.com/careers"
+                value={companyLink}
+                onChange={(event) => setCompanyLink(event.target.value)}
               />
             </label>
           </section>

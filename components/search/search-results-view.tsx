@@ -25,6 +25,10 @@ const searchTabs: { key: SearchTab; label: string }[] = [
   { key: "topics", label: "Topics" },
 ];
 
+// "#tag" searches only relate to content, not to people or companies.
+const hashtagTabs: SearchTab[] = ["all", "posts", "referrals", "topics"];
+const isHashtag = (query: string) => /^#[\p{L}\p{N}_]+$/u.test(query);
+
 const groupTitles: Record<SearchGroup, string> = {
   users: "People",
   posts: "Posts",
@@ -90,7 +94,11 @@ function AllResults({
   onSeeAll: (tab: SearchTab) => void;
 }) {
   const { results, loading, error } = useSearchOverview(query, 6);
-  const nonEmpty = groupOrder.filter((group) => results[group].length > 0);
+  const nonEmpty = groupOrder.filter(
+    (group) =>
+      results[group].length > 0 &&
+      !(isHashtag(query) && (group === "users" || group === "companies")),
+  );
   return (
     <>
       {nonEmpty.map((group) => (
@@ -118,7 +126,10 @@ export default function SearchResultsView() {
   const router = useRouter();
   const query = (params.get("q") ?? "").trim();
   const requested = params.get("type") as SearchTab | null;
-  const tab: SearchTab = searchTabs.some((item) => item.key === requested)
+  const tabs = isHashtag(query)
+    ? searchTabs.filter((item) => hashtagTabs.includes(item.key))
+    : searchTabs;
+  const tab: SearchTab = tabs.some((item) => item.key === requested)
     ? (requested as SearchTab)
     : "all";
   const go = (next: SearchTab) =>
@@ -136,7 +147,7 @@ export default function SearchResultsView() {
       </div>
       <PillTabs
         label="Result types"
-        items={searchTabs}
+        items={tabs}
         active={tab}
         onChange={go}
       />

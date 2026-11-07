@@ -81,6 +81,10 @@ function usePlatformState() {
       if (value && !user) return requireSignIn();
       composer.setComposer(value);
     }) as typeof composer.setComposer,
+    openQuoteComposer: ((post) => {
+      if (!user) return requireSignIn();
+      composer.openQuoteComposer(post);
+    }) as typeof composer.openQuoteComposer,
     // The referral form is its own page, not a dialog.
     openReferralForm: () => {
       if (!user) return requireSignIn();

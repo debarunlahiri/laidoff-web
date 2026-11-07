@@ -3,14 +3,14 @@ import PollView from "@/components/feed/poll-view";
 import PostImages from "@/components/feed/post-images";
 import CommunityNote from "@/components/community-notes/community-note";
 import PostComments from "@/components/feed/post-comments";
+import QuotedPost from "@/components/feed/quoted-post";
 import PostStats from "@/components/feed/post-stats";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
-import Markdown from "react-markdown";
-import remarkBreaks from "remark-breaks";
-import remarkHashtags from "@/lib/remark-hashtags";
-import { api, invalidate } from "@/lib/api";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import MarkdownEditor from "@/components/ui/markdown-editor";
+import RichText from "@/components/ui/rich-text";
+import { api, apiMessage, displayDate, displayTime, invalidate } from "@/lib/api";
 import Popover from "@/components/ui/popover";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
@@ -27,6 +27,7 @@ import {
   Copy,
   EyeOff,
   Flag,
+  Pencil,
   Trash2,
   FileText,
   UserPlus,
@@ -35,6 +36,7 @@ import {
   Leaf,
   MessageCircle,
   Plus,
+  Quote,
   Repeat2,
   Share2,
 } from "lucide-react";
@@ -43,6 +45,83 @@ const clampChars = 420;
 const clampLines = 8;
 
 // full: render the whole text (post page) instead of a clamped preview.
+// Repost / Quote chooser that opens above the action bar.
+function RepostMenu({
+  reposted,
+  onRepost,
+  onQuote,
+}: {
+  reposted: boolean;
+  onRepost: () => void;
+  onQuote: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) =>
+      !root.current?.contains(event.target as Node) && setOpen(false);
+    const escape = (event: KeyboardEvent) =>
+      event.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+  return (
+    <div className="repost-menu" ref={root}>
+      <button
+        type="button"
+        className={reposted ? "active-action" : ""}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <Repeat2 size={18} />
+        Repost
+      </button>
+      {open && (
+        <div className="repost-menu-list" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onRepost();
+            }}
+          >
+            <Repeat2 size={17} />
+            <span>
+              <strong>{reposted ? "Undo repost" : "Repost"}</strong>
+              <small>
+                {reposted
+                  ? "Remove it from your reposts"
+                  : "Share this post as it is"}
+              </small>
+            </span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onQuote();
+            }}
+          >
+            <Quote size={17} />
+            <span>
+              <strong>Quote</strong>
+              <small>Add your thoughts to it</small>
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PostCard({
   post,
   full = false,
@@ -61,7 +140,9 @@ export default function PostCard({
     toggleDislike,
     toggleBookmark,
     toggleRepost,
+    openQuoteComposer,
     toggleComments,
+    postTopics,
     openNoteDialog,
     hidePost,
     deletePost,
@@ -69,6 +150,32 @@ export default function PostCard({
     notify,
     postPending,
   } = usePlatform();
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(post.text);
+  const [draftTopic, setDraftTopic] = useState(post.topic);
+  const [saving, setSaving] = useState(false);
+  const canSave =
+    !saving &&
+    (draft.trim() || (post.images?.length ?? 0) > 0) &&
+    (draft.trim() !== post.text || draftTopic !== post.topic);
+  async function saveEdit() {
+    if (!canSave) return;
+    setSaving(true);
+    try {
+      await api(`/posts/${post.id}`, {
+        method: "PATCH",
+        body: { text: draft.trim(), topic: draftTopic },
+      });
+      invalidate("posts");
+      setEditing(false);
+      notify("Your post was updated.");
+    } catch (error) {
+      notify(apiMessage(error));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const isFollowing = Boolean(
     post.following || (post.authorId && following.includes(post.authorId)),
@@ -144,6 +251,18 @@ export default function PostCard({
             <span>{post.role}</span>
             <span className="post-time">
               {post.time} <span>·</span> <Earth size={12} />
+              {post.editedAt && (
+                <>
+                  {" "}
+                  <span>·</span>{" "}
+                  <span
+                    className="edited-mark"
+                    title={`Edited ${displayDate(post.editedAt)} · ${displayTime(post.editedAt)}`}
+                  >
+                    Edited
+                  </span>
+                </>
+              )}
             </span>
           </div>
         </UserLink>
@@ -234,6 +353,19 @@ export default function PostCard({
                 <button
                   onClick={() => {
                     close();
+                    setDraft(post.text);
+                    setDraftTopic(post.topic);
+                    setEditing(true);
+                  }}
+                >
+                  <Pencil size={16} />
+                  Edit post
+                </button>
+              )}
+              {post.own && (
+                <button
+                  onClick={() => {
+                    close();
                     void deletePost(post.id);
                   }}
                 >
@@ -264,37 +396,52 @@ export default function PostCard({
         )}
         {post.open && <span className="open-tag">Open to work</span>}
       </div>
-      {post.text && (
-        <div className={`post-copy${clamped ? " is-clamped" : ""}`}>
-          <Markdown
-            remarkPlugins={[remarkBreaks, remarkHashtags]}
-            allowElement={(element) =>
-              element.tagName !== "img" &&
-              (!clamped ||
-                element.tagName !== "a" ||
-                element.properties.className?.includes("post-hashtag") === true)
-            }
-            components={{
-              a: ({ href, className, children, title }) =>
-                href && className === "post-hashtag" ? (
-                  <Link
-                    className="post-hashtag"
-                    href={href}
-                    prefetch={false}
-                    tabIndex={clamped ? -1 : undefined}
-                  >
-                    {children}
-                  </Link>
-                ) : (
-                  <a href={href} className={className} title={title}>
-                    {children}
-                  </a>
-                ),
+      {editing && (
+        <div className="post-edit" onClick={(event) => event.stopPropagation()}>
+          <MarkdownEditor
+            autoFocus
+            ariaLabel="Edit your post"
+            maxLength={20000}
+            value={draft}
+            onChange={setDraft}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setEditing(false);
+              if (event.key === "Enter" && (event.metaKey || event.ctrlKey))
+                void saveEdit();
             }}
-            unwrapDisallowed
-          >
-            {post.text}
-          </Markdown>
+          />
+          <div className="post-edit-row">
+            <select
+              aria-label="Topic"
+              value={draftTopic}
+              onChange={(event) => setDraftTopic(event.target.value)}
+            >
+              {[...new Set([post.topic, ...postTopics])].map((topic) => (
+                <option key={topic}>{topic}</option>
+              ))}
+            </select>
+            <span className="post-edit-hint">Ctrl/⌘ + Enter to save</span>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setEditing(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="primary"
+              disabled={!canSave}
+              onClick={() => void saveEdit()}
+            >
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      )}
+      {post.text && !editing && (
+        <div className={`post-copy${clamped ? " is-clamped" : ""}`}>
+          <RichText text={post.text} clamped={clamped} />
         </div>
       )}
       {!full && (
@@ -314,6 +461,7 @@ export default function PostCard({
         />
       )}
       <PostImages images={post.images ?? []} author={post.name} />
+      {post.quoted && <QuotedPost post={post.quoted} />}
       {post.referral && (
         <button
           className="referral-inline"
@@ -370,13 +518,11 @@ export default function PostCard({
           <MessageCircle size={18} />
           Comment
         </button>
-        <button
-          className={post.reposted ? "active-action" : ""}
-          onClick={() => toggleRepost(post.id, Boolean(post.reposted))}
-        >
-          <Repeat2 size={18} />
-          Repost
-        </button>
+        <RepostMenu
+          reposted={Boolean(post.reposted)}
+          onRepost={() => toggleRepost(post.id, Boolean(post.reposted))}
+          onQuote={() => openQuoteComposer(post)}
+        />
         <button onClick={() => void share()}>
           <Share2 size={18} />
           Share

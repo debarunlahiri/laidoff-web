@@ -73,8 +73,14 @@ export function useApiResource<T>(path: string | null, initial: T, pollMs = 0) {
             if (document.visibilityState === "visible") void reload();
           }, pollMs)
         : null;
+    // Coming back to the tab refreshes right away instead of waiting for the next tick.
+    const wake = () => {
+      if (document.visibilityState === "visible") void reload();
+    };
+    if (pollMs && path) document.addEventListener("visibilitychange", wake);
     return () => {
       window.removeEventListener("api:changed", change);
+      document.removeEventListener("visibilitychange", wake);
       if (interval) clearInterval(interval);
     };
   }, [path, reload, pollMs]);
@@ -192,8 +198,13 @@ export function useApiList<T>(path: string | null, pollMs = 0) {
             if (document.visibilityState === "visible") void load(false, true);
           }, pollMs)
         : null;
+    const wake = () => {
+      if (document.visibilityState === "visible") void load(false, true);
+    };
+    if (pollMs && path) document.addEventListener("visibilitychange", wake);
     return () => {
       window.removeEventListener("api:changed", change);
+      document.removeEventListener("visibilitychange", wake);
       if (timer) clearInterval(timer);
     };
   }, [path, load, pollMs]);

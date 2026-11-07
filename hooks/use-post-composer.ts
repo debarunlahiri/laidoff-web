@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { api, apiMessage, invalidate } from "@/lib/api";
 import { maxPostImages } from "@/lib/image-file";
+import type { Post } from "@/types";
 
 export const maxPollOptions = 6;
 export const minPollOptions = 2;
@@ -22,7 +23,17 @@ export function usePostComposer({
   navigate: (section: string) => void;
   notify: (message: string) => void;
 }) {
-  const [composer, setComposer] = useState(false);
+  const [composer, setComposerOpen] = useState(false);
+  // The post being quoted, when the composer was opened from "Quote".
+  const [quoting, setQuoting] = useState<Post | null>(null);
+  const setComposer = (open: boolean) => {
+    setComposerOpen(open);
+    if (!open) setQuoting(null);
+  };
+  const openQuoteComposer = (post: Post) => {
+    setQuoting(post);
+    setComposerOpen(true);
+  };
   const [postImages, setPostImages] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [topic, setTopic] = useState("");
@@ -99,7 +110,8 @@ export function usePostComposer({
           companyId: company || null,
           anonymous,
           uploadIds,
-          poll: pollOpen
+          quotedPostId: quoting?.id ?? null,
+          poll: pollOpen && !quoting
             ? {
                 options: filledOptions,
                 allowMultiple: pollMultiple,
@@ -118,7 +130,7 @@ export function usePostComposer({
       setTab("Latest");
       navigate("Home");
       invalidate("posts");
-      notify("Your post has been published.");
+      notify(quoting ? "Your quote has been posted." : "Your post has been published.");
       return true;
     } catch (error) {
       notify(apiMessage(error));
@@ -130,6 +142,8 @@ export function usePostComposer({
   return {
     composer,
     setComposer,
+    quoting,
+    openQuoteComposer,
     postImages,
     addPostImages,
     removePostImage,

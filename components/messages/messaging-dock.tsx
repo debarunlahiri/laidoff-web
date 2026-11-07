@@ -27,6 +27,8 @@ import {
   CheckCheck,
   ChevronDown,
   ChevronUp,
+  ChevronsLeft,
+  ChevronsRight,
   Maximize2,
   Minus,
   Search,
@@ -51,6 +53,8 @@ export default function MessagingDock() {
   const { currentUser, notify } = usePlatform();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(true);
+  // Slid fully off to the right edge, leaving only a small tab, to free up room.
+  const [tucked, setTucked] = useState(false);
   const [tab, setTab] = useState<"focused" | "unread">("focused");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<string[]>([]);
@@ -62,13 +66,22 @@ export default function MessagingDock() {
 
   useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem("layoffcircle:dock") !== "open");
+      setCollapsed(localStorage.getItem("laidoffcircle:dock") !== "open");
+      const saved = localStorage.getItem("laidoffcircle:dock-tucked");
+      // First visit on a small screen: start tucked away.
+      setTucked(saved ? saved === "yes" : window.innerWidth < 1100);
     } catch {}
   }, []);
+  function tuck(next: boolean) {
+    setTucked(next);
+    try {
+      localStorage.setItem("laidoffcircle:dock-tucked", next ? "yes" : "no");
+    } catch {}
+  }
   function toggle() {
     setCollapsed((current) => {
       try {
-        localStorage.setItem("layoffcircle:dock", current ? "open" : "closed");
+        localStorage.setItem("laidoffcircle:dock", current ? "open" : "closed");
       } catch {}
       return !current;
     });
@@ -111,12 +124,23 @@ export default function MessagingDock() {
     );
   }
 
+  // Other parts of the app (e.g. the Message button on a profile) ask the dock
+  // to open a chat window for a conversation.
+  useEffect(() => {
+    const onOpen = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail;
+      if (id) openChat(id);
+    };
+    window.addEventListener("dock:open-chat", onOpen);
+    return () => window.removeEventListener("dock:open-chat", onOpen);
+  }, []);
+
   // The full inbox page already shows everything the dock does.
   if (!currentUser || pathname.startsWith("/messages")) return null;
 
   return (
     <>
-      <div className="msg-dock-windows">
+      <div className={`msg-dock-windows${tucked ? " tucked" : ""}`}>
         {open.map((id) => {
           const row = rows.find((item) => item.id === id);
           return row ? (
@@ -132,10 +156,33 @@ export default function MessagingDock() {
           ) : null;
         })}
       </div>
+      {tucked ? (
+        <button
+          type="button"
+          className="msg-dock-tab"
+          aria-label={`Show messaging${totalUnread ? `, ${totalUnread} unread` : ""}`}
+          title="Show messaging"
+          onClick={() => tuck(false)}
+        >
+          <ChevronsLeft size={16} />
+          <span className="msg-dock-me">
+            <Avatar
+              initials={initials(currentUser.name)}
+              src={currentUser.profileImageUrl}
+              small
+            />
+            <i className="msg-online" />
+          </span>
+          {totalUnread > 0 && (
+            <span className="msg-count">{totalUnread > 99 ? "99+" : totalUnread}</span>
+          )}
+        </button>
+      ) : (
       <aside
         className={`msg-dock${collapsed ? " collapsed" : ""}`}
         aria-label="Messaging"
       >
+        <div className="msg-dock-top">
         <button
           type="button"
           className="msg-dock-header"
@@ -160,6 +207,16 @@ export default function MessagingDock() {
             {collapsed ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </span>
         </button>
+        <button
+          type="button"
+          className="msg-dock-hide"
+          aria-label="Hide messaging to the side"
+          title="Hide to the side"
+          onClick={() => tuck(true)}
+        >
+          <ChevronsRight size={18} />
+        </button>
+        </div>
         {!collapsed && (
           <>
             <label className="msg-dock-search">
@@ -246,6 +303,7 @@ export default function MessagingDock() {
           </>
         )}
       </aside>
+      )}
     </>
   );
 }

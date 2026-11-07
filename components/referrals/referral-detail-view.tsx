@@ -4,8 +4,6 @@ import { useApiResource } from "@/hooks/use-api-resource";
 import { queryPath } from "@/lib/api";
 import type { ApiReferral } from "@/lib/api-types";
 import { toOpportunity } from "@/lib/referral-mapper";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 
 export default function ReferralDetailView({ id }: { id: string }) {
   const { data, loading, error } = useApiResource<ApiReferral[]>(
@@ -16,10 +14,6 @@ export default function ReferralDetailView({ id }: { id: string }) {
 
   return (
     <div className="post-detail">
-      <Link href="/referrals" className="back-link">
-        <ArrowLeft size={16} />
-        Back to referrals
-      </Link>
       {loading && !referral && <p role="status">Loading referral…</p>}
       {!loading && !referral && (
         <div className="card empty-state" role="alert">

@@ -2,13 +2,13 @@ import InfoPage from "@/components/layout/info-page";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "About LayoffCircle" };
+export const metadata: Metadata = { title: "About LaidOffCircle" };
 
 export default function AboutPage() {
   return (
     <InfoPage
-      title="About LayoffCircle"
-      intro="LayoffCircle is a community for people navigating layoffs, job searches, and career changes."
+      title="About LaidOffCircle"
+      intro="LaidOffCircle is a community for people navigating layoffs, job searches, and career changes."
     >
       <section>
         <h2>Find people who understand</h2>

@@ -2,6 +2,7 @@
 import ConnectButton from "@/components/network/connect-button";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
+import { mediaUrl } from "@/lib/api";
 import { usePlatform } from "@/providers/platform-provider";
 import type { Person } from "@/types";
 import { MessageCircle } from "lucide-react";
@@ -15,11 +16,19 @@ export default function PersonCard({ person }: { person: Person }) {
   const { startConversation } = usePlatform();
   return (
     <article
-      className="person-card card"
+      className="person-card pc card"
       style={{ "--hue": hue(person.name) } as CSSProperties}
     >
-      <div className="person-banner" aria-hidden="true" />
-      <div className="person-card-top">
+      <div
+        className={`pc-banner${person.coverUrl ? " has-cover" : ""}`}
+        style={
+          person.coverUrl
+            ? { backgroundImage: `url(${mediaUrl(person.coverUrl)})` }
+            : undefined
+        }
+        aria-hidden="true"
+      />
+      <div className="pc-avatar">
         <UserLink id={person.id}>
           <Avatar
             initials={person.initials}
@@ -27,16 +36,18 @@ export default function PersonCard({ person }: { person: Person }) {
             src={person.imageUrl}
           />
         </UserLink>
-        {person.detail && <span className="person-badge">{person.detail}</span>}
       </div>
-      <h3>
-        <UserLink id={person.id}>{person.name}</UserLink>
-      </h3>
-      <p>{person.role}</p>
-      <div className="person-actions">
+      <div className="pc-body">
+        <h3>
+          <UserLink id={person.id}>{person.name}</UserLink>
+        </h3>
+        <p className="pc-role">{person.role || "Community member"}</p>
+        {person.detail && <span className="pc-detail">{person.detail}</span>}
+      </div>
+      <div className="pc-actions">
         <ConnectButton personId={person.id} />
         <button
-          className="person-message"
+          className="pc-message"
           aria-label={`Message ${person.name}`}
           title="Message"
           disabled={!person.id}

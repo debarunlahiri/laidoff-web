@@ -20,40 +20,46 @@ export default function ConnectionRequests() {
   );
   if (!incoming.length) return null;
   return (
-    <section className="card request-panel" aria-label="Connection requests">
-      <div className="request-heading">
+    <section className="card rq" aria-label="Connection requests">
+      <header className="rq-head">
         <h2>Connection requests</h2>
         <span className="count-pill">{incoming.length}</span>
-      </div>
-      {incoming.map((link) => (
-        <div className="request-row" key={link.id}>
-          <UserLink id={link.requester_id}>
-            <Avatar initials={initials(link.name)} src={link.profileImageUrl} />
-          </UserLink>
-          <span className="request-who">
+      </header>
+      <ul className="rq-list">
+        {incoming.map((link) => (
+          <li className="rq-item" key={link.id}>
             <UserLink id={link.requester_id}>
-              <strong>{link.name}</strong>
+              <Avatar
+                initials={initials(link.name)}
+                src={link.profileImageUrl}
+              />
             </UserLink>
-            <small>{link.role || "Community member"}</small>
-          </span>
-          <button
-            className="primary request-accept"
-            disabled={networkPending.includes(link.id)}
-            onClick={() => void acceptConnection(link.id)}
-          >
-            <Check size={16} /> Accept
-          </button>
-          <button
-            className="request-decline"
-            aria-label={`Decline ${link.name}`}
-            title="Decline"
-            disabled={networkPending.includes(link.requester_id)}
-            onClick={() => void toggleConnection(link.requester_id)}
-          >
-            <X size={17} />
-          </button>
-        </div>
-      ))}
+            <div className="rq-who">
+              <UserLink id={link.requester_id}>
+                <strong>{link.name}</strong>
+              </UserLink>
+              <small>{link.role || "Community member"}</small>
+            </div>
+            <div className="rq-actions">
+              <button
+                className="rq-accept"
+                disabled={networkPending.includes(link.id)}
+                onClick={() => void acceptConnection(link.id)}
+              >
+                <Check size={15} /> Accept
+              </button>
+              <button
+                className="rq-decline"
+                aria-label={`Decline ${link.name}`}
+                disabled={networkPending.includes(link.requester_id)}
+                onClick={() => void toggleConnection(link.requester_id)}
+              >
+                <X size={15} /> Decline
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

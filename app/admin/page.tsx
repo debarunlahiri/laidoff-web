@@ -1,5 +1,5 @@
-import AdminApp from "@/components/admin/admin-app";
-export const metadata = { title: "Admin — LayoffCircle" };
-export default function AdminPage() {
-  return <AdminApp />;
+import Dashboard from "@/components/admin/dashboard";
+export const metadata = { title: "Dashboard" };
+export default function Page() {
+  return <Dashboard />;
 }

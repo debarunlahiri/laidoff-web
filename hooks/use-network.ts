@@ -19,8 +19,11 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
     outgoingRequests: 0,
     incomingRequests: 0,
   });
-  const users = useApiList<ApiPerson>("/users");
-  const links = useApiList<ApiConnection>(userId ? "/connections" : null);
+  const users = useApiList<ApiPerson>("/users", 60000);
+  const links = useApiList<ApiConnection>(
+    userId ? "/connections" : null,
+    30000,
+  );
   const [pending, setPending] = useState<string[]>([]);
   const following = users.data
     .filter((person) => person.following)
@@ -29,6 +32,24 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
     link.requester_id === userId ? link.recipient_id : link.requester_id,
   );
   const people: Person[] = users.data.map(toPerson);
+  // Who to suggest: never someone already connected. People you only follow are
+  // still suggested (with Connect), and open requests sink to the bottom.
+  const acceptedIds = new Set(
+    links.data
+      .filter((link) => link.status === "accepted")
+      .map((link) =>
+        link.requester_id === userId ? link.recipient_id : link.requester_id,
+      ),
+  );
+  const pendingIds = new Set(
+    connected.filter((id) => !acceptedIds.has(id)),
+  );
+  const suggestedPeople = people
+    .filter((person) => !acceptedIds.has(person.id ?? ""))
+    .sort(
+      (a, b) =>
+        Number(pendingIds.has(a.id ?? "")) - Number(pendingIds.has(b.id ?? "")),
+    );
   async function act(id: string, action: () => Promise<unknown>) {
     if (pending.includes(id)) return;
     setPending((current) => [...current, id]);
@@ -68,6 +89,7 @@ export function useNetwork(notify: (message: string) => void, userId: string) {
   return {
     networkStats: stats.data,
     people,
+    suggestedPeople,
     following,
     connected,
     connections: links.data,

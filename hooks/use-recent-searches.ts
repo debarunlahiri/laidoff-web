@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 
-const key = "layoffcircle:recent-searches";
+const key = "laidoffcircle:recent-searches";
 const limit = 6;
 
 // Per-viewer convenience only; storage may be blocked, so every access is guarded.

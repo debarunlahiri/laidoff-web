@@ -1,4 +1,5 @@
 "use client";
+import { sectionPaths } from "@/config/navigation";
 import { pageHeadings } from "@/config/page-headings";
 import { usePlatform } from "@/providers/platform-provider";
 import { Plus } from "lucide-react";
@@ -30,6 +31,15 @@ export default function PageHeading() {
         </div>
       </div>
     );
+
+  // Only the main pages get the big heading. Detail pages (a single post, a
+  // post page opened from search, etc.) have their own back link and title, and
+  // would otherwise fall back to the Home heading.
+  const mainPage =
+    Object.values(sectionPaths).includes(pathname) ||
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/users/");
+  if (!mainPage) return null;
 
   return (
     <div className="page-heading">

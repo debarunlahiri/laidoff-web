@@ -1,4 +1,4 @@
-# LayoffCircle
+# LaidOffCircle
 
 A responsive Next.js App Router prototype of a global professional community for career recovery, connections, referrals, and workforce transparency.
 

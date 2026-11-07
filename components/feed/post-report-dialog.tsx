@@ -1,4 +1,5 @@
 "use client";
+import { reportIcon } from "@/lib/report-icons";
 import Dialog from "@/components/ui/dialog";
 import { usePlatform } from "@/providers/platform-provider";
 import { Flag, X } from "lucide-react";
@@ -14,6 +15,7 @@ export default function PostReportDialog() {
     submitPostReport,
   } = usePlatform();
   const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [reason, setReason] = useState("");
 
   if (!reportPostId) return null;
@@ -38,7 +40,7 @@ export default function PostReportDialog() {
         className="referral-create-form"
         onSubmit={(event) => {
           event.preventDefault();
-          void submitPostReport(category, reason);
+          void submitPostReport(category, reason, subcategory);
         }}
       >
         <fieldset className="report-categories">
@@ -51,12 +53,27 @@ export default function PostReportDialog() {
                 name="report-category"
                 value={item.value}
                 checked={category === item.value}
-                onChange={() => setCategory(item.value)}
+                onChange={() => (setCategory(item.value), setSubcategory(""))}
               />
-              {item.label}
+              {(() => { const I = reportIcon(item.icon); return <I size={15} aria-hidden />; })()} {item.label}
             </label>
           ))}
         </fieldset>
+          {(() => {
+            const subs = reportCategories.find((c) => c.value === category)?.subcategories ?? [];
+            return subs.length ? (
+              <div className="report-subcategories">
+                <p className="subtle-text">What best describes it?</p>
+                {subs.map((sub) => (
+                  <label key={sub.value} className="checkbox-label">
+                    <input type="radio" name="report-subcategory" value={sub.value} checked={subcategory === sub.value} onChange={() => setSubcategory(sub.value)} />
+                    {sub.label}
+                  </label>
+                ))}
+              </div>
+            ) : null;
+          })()}
+
         <label className="field-label">
           More details (optional)
           <textarea
@@ -68,7 +85,7 @@ export default function PostReportDialog() {
         </label>
         <div className="modal-bottom">
           <span />
-          <button className="primary" disabled={!category || reportSaving}>
+          <button className="primary" disabled={!category || reportSaving || (Boolean(reportCategories.find((c) => c.value === category)?.subcategories?.length) && !subcategory)}>
             <Flag size={16} />
             {reportSaving ? "Submitting…" : "Submit report"}
           </button>

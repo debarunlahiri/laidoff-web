@@ -21,6 +21,16 @@ export type ApiPoll = {
   closed: boolean;
   myVotes: string[];
 };
+export type ApiQuotedPost = {
+  id: string;
+  text: string;
+  topic: string;
+  createdAt: string;
+  anonymous: boolean;
+  authorId: string | null;
+  name: string;
+  image: string | null;
+};
 export type ApiPost = {
   poll?: ApiPoll | null;
   profileImageUrl?: string | null;
@@ -50,6 +60,8 @@ export type ApiPost = {
   reaction: "like" | "dislike" | null;
   saved: number | boolean;
   reposted: number | boolean;
+  editedAt?: string | null;
+  quoted?: ApiQuotedPost | null;
 };
 export type ApiEngagementPerson = {
   id: string;
@@ -74,6 +86,7 @@ export type ApiComment = {
   authorId: string;
   profileImageUrl: string | null;
   createdAt: string;
+  editedAt?: string | null;
   likes: number;
   dislikes: number;
   myReaction: "like" | "dislike" | null;
@@ -89,6 +102,7 @@ export type ApiPerson = {
   openToWork: number | boolean;
   following: number | boolean;
   profileImageUrl?: string | null;
+  coverImageUrl?: string | null;
 };
 export type ApiConnection = {
   id: string;
@@ -109,6 +123,8 @@ export type ApiReferral = {
   location: string;
   skills: string;
   description: string;
+  companyLink?: string | null;
+  jobLink?: string | null;
   status: "open" | "closed";
   own: number | boolean;
   requestStatus: "pending" | "accepted" | "declined" | null;

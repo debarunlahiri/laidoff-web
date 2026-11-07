@@ -1,13 +1,13 @@
 import InfoPage from "@/components/layout/info-page";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Privacy | LayoffCircle" };
+export const metadata: Metadata = { title: "Privacy | LaidOffCircle" };
 
 export default function PrivacyPage() {
   return (
     <InfoPage
       title="Privacy"
-      intro="Here’s what you share when you use LayoffCircle and who can see it."
+      intro="Here’s what you share when you use LaidOffCircle and who can see it."
     >
       <section>
         <h2>Account and profile</h2>
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
       <section>
         <h2>Browser storage</h2>
         <p>
-          LayoffCircle uses browser storage to keep you signed in and remember
+          LaidOffCircle uses browser storage to keep you signed in and remember
           settings such as your theme.
         </p>
       </section>

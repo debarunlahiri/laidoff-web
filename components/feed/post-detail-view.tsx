@@ -4,8 +4,6 @@ import PostDetailComments from "@/components/feed/post-detail-comments";
 import { useApiResource } from "@/hooks/use-api-resource";
 import type { ApiPost } from "@/lib/api-types";
 import { toPost } from "@/lib/post-mapper";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { api } from "@/lib/api";
 import { usePlatform } from "@/providers/platform-provider";
 import { useEffect, useRef } from "react";
@@ -29,10 +27,6 @@ export default function PostDetailView({ id }: { id: string }) {
 
   return (
     <div className="post-detail">
-      <Link href="/" className="back-link">
-        <ArrowLeft size={16} />
-        Back to feed
-      </Link>
       {resource.loading && !post && <p role="status">Loading post…</p>}
       {!post && !resource.loading && (
         <div className="card empty-state" role="alert">

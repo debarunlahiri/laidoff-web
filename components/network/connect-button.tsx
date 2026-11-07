@@ -3,7 +3,13 @@ import { usePlatform } from "@/providers/platform-provider";
 import { Check, Clock, UserPlus, X } from "lucide-react";
 
 // Connect / Requested / Connected for one person; incoming requests get Accept + Decline.
-export default function ConnectButton({ personId }: { personId?: string }) {
+export default function ConnectButton({
+  personId,
+  iconOnly = false,
+}: {
+  personId?: string;
+  iconOnly?: boolean;
+}) {
   const {
     connections,
     currentUser,
@@ -28,11 +34,14 @@ export default function ConnectButton({ personId }: { personId?: string }) {
     return (
       <>
         <button
-          className="connect-btn connect-primary"
+          className={`connect-btn connect-primary${iconOnly ? " icon-only" : ""}`}
+          aria-label="Accept request"
+          title="Accept request"
           disabled={busy}
           onClick={() => void acceptConnection(link!.id)}
         >
-          <Check size={16} /> Accept
+          <Check size={16} />
+          {!iconOnly && " Accept"}
         </button>
         <button
           className="connect-icon"
@@ -67,14 +76,14 @@ export default function ConnectButton({ personId }: { personId?: string }) {
         };
   return (
     <button
-      className={`connect-btn ${state.cls}`}
-      title={state.title}
+      className={`connect-btn ${state.cls}${iconOnly ? " icon-only" : ""}`}
+      title={state.title ?? state.label}
       aria-label={state.title ? `${state.label}. ${state.title}` : state.label}
       disabled={busy}
       onClick={() => personId && void toggleConnection(personId)}
     >
       {state.icon}
-      {state.label}
+      {!iconOnly && state.label}
     </button>
   );
 }

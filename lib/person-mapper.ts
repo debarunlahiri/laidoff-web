@@ -8,6 +8,7 @@ export function toPerson(person: ApiPerson): Person {
     ...person,
     initials: initials(person.name),
     imageUrl: person.profileImageUrl,
+    coverUrl: person.coverImageUrl,
     color: "blue",
     detail: person.openToWork ? "Open to work" : "",
   };

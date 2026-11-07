@@ -2,7 +2,7 @@
 import { useRecentSearches } from "@/hooks/use-recent-searches";
 import { useSearchOverview, minSearchLength } from "@/hooks/use-search";
 import { usePlatform } from "@/providers/platform-provider";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import SearchIdle from "./search-idle";
@@ -103,7 +103,7 @@ export default function SearchBox() {
           }
           aria-autocomplete="list"
           autoComplete="off"
-          placeholder="Search LayoffCircle  ( / )"
+          placeholder="Search LaidOffCircle  ( / )"
           value={value}
           onFocus={() => setOpen(true)}
           onChange={(event) => {
@@ -136,6 +136,23 @@ export default function SearchBox() {
             }
           }}
         />
+        {value && (
+          <button
+            type="button"
+            className="search-clear"
+            aria-label="Clear search"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              setValue("");
+              setActive(-1);
+              setOpen(true);
+              input.current?.focus();
+              if (pathname === "/search") router.replace("/search");
+            }}
+          >
+            <X size={15} />
+          </button>
+        )}
       </label>
       {showIdle && (
         <SearchIdle

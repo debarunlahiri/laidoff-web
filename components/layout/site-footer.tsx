@@ -17,7 +17,7 @@ export default function SiteFooter() {
         ))}
       </nav>
       <p>
-        © 2026 LayoffCircle <span>Made for the way forward.</span>
+        © 2026 LaidOffCircle <span>Made for the way forward.</span>
       </p>
     </footer>
   );

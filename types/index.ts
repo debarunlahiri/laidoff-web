@@ -1,5 +1,6 @@
 import type {
   ApiPoll,
+  ApiQuotedPost,
   ReferralFeedback,
   ReferralField,
   ReferralLevel,
@@ -14,12 +15,15 @@ export type Post = {
   reaction?: "like" | "dislike" | null;
   saved?: boolean;
   reposted?: boolean;
+  quoted?: ApiQuotedPost | null;
   name: string;
   role: string;
   avatar: string;
   avatarUrl?: string | null;
   color: string;
   time: string;
+  createdAt?: string;
+  editedAt?: string | null;
   topic: string;
   company: string;
   text: string;
@@ -42,6 +46,7 @@ export type Person = {
   role: string;
   initials: string;
   imageUrl?: string | null;
+  coverUrl?: string | null;
   color: string;
   detail: string;
 };
@@ -53,6 +58,8 @@ export type ReferralOpportunity = {
   requestStatus?: string | null;
   own?: boolean;
   description?: string;
+  companyLink?: string | null;
+  jobLink?: string | null;
   createdAt?: string;
   workMode?: ReferralWorkMode;
   level?: ReferralLevel | null;

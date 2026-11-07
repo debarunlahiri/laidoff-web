@@ -1,17 +1,21 @@
 "use client";
 
 import { useApiResource, useDebouncedValue } from "@/hooks/use-api-resource";
-import { queryPath } from "@/lib/api";
+import { api, apiMessage, queryPath } from "@/lib/api";
 import type { ApiCompany } from "@/lib/api-types";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Plus, X } from "lucide-react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 
 export default function CompanyAutocomplete({
   value,
   onChange,
   required = false,
+  label,
+  placeholder = "Search and select a company",
 }: {
   required?: boolean;
+  label?: string;
+  placeholder?: string;
   value: string;
   onChange: (company: string) => void;
 }) {
@@ -36,6 +40,33 @@ export default function CompanyAutocomplete({
     null,
   );
   const options = result.data;
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const typed = query.trim();
+  // Offer to add the company when what was typed isn't already in the list.
+  const canCreate =
+    typed.length >= 2 &&
+    !result.loading &&
+    !options.some((o) => o.name.toLowerCase() === typed.toLowerCase());
+
+  async function createCompany() {
+    if (creating || !canCreate) return;
+    setCreating(true);
+    setCreateError("");
+    try {
+      const company = await api<ApiCompany>("/companies", {
+        method: "POST",
+        body: { name: typed },
+      });
+      onChange(company.id);
+      setOpen(false);
+      setActive(-1);
+    } catch (error) {
+      setCreateError(apiMessage(error));
+    } finally {
+      setCreating(false);
+    }
+  }
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -95,7 +126,9 @@ export default function CompanyAutocomplete({
         }
       }}
     >
-      <label htmlFor={id}>{required ? "Company" : "Company (optional)"}</label>
+      <label htmlFor={id}>
+        {label ?? (required ? "Company" : "Company (optional)")}
+      </label>
       <div className="company-combobox">
         <input
           ref={input}
@@ -111,7 +144,7 @@ export default function CompanyAutocomplete({
               : undefined
           }
           autoComplete="off"
-          placeholder="Search and select a company"
+          placeholder={placeholder}
           value={open ? query : (selection.data?.name ?? "")}
           onFocus={() => {
             setQuery("");
@@ -212,10 +245,27 @@ export default function CompanyAutocomplete({
               {value === company.id && <Check size={15} />}
             </div>
           ))}
+          {canCreate && (
+            <button
+              type="button"
+              className="company-create"
+              disabled={creating}
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={() => void createCompany()}
+            >
+              <Plus size={15} />
+              {creating ? "Adding…" : `Add “${typed}” as a new company`}
+            </button>
+          )}
+          {createError && <p role="alert">{createError}</p>}
           {result.loading && <p role="status">Searching companies…</p>}
           {result.error && <p role="alert">{result.error}</p>}
           {!result.loading && !result.error && !options.length && (
-            <p role="status">No companies found. Try another search.</p>
+            <p role="status">
+              {canCreate
+                ? "Not in the list yet."
+                : "No companies found. Try another search."}
+            </p>
           )}
         </div>
       )}

@@ -201,7 +201,9 @@ export default function TemplatesPanel() {
                 <input
                   className="adm-icon"
                   value={f.icon}
-                  maxLength={8}
+                  maxLength={40}
+                  placeholder="icon name"
+                  title="Icon name: comment-dots, handshake, globe, lock or chart-column"
                   onChange={(e) =>
                     set({
                       features: features.map((x, j) =>
@@ -250,7 +252,7 @@ export default function TemplatesPanel() {
                   set({
                     features: [
                       ...features,
-                      { icon: "✨", title: "", text: "" },
+                      { icon: "globe", title: "", text: "" },
                     ],
                   })
                 }

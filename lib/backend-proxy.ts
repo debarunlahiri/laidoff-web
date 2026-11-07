@@ -26,7 +26,7 @@ const errorResponse = (message: string, status: number) =>
     { error: { message } },
     { status, headers: { "Cache-Control": "no-store" } },
   );
-export async function proxyBackend(
+async function proxyBackendInner(
   request: NextRequest,
   segments: string[],
   media = false,
@@ -106,7 +106,91 @@ export async function proxyBackend(
       status: upstream.status,
       headers: responseHeaders,
     });
-  } catch {
+  } catch (error) {
+    console.error("[proxy] upstream request failed", error);
     return errorResponse("The server is unavailable. Please try again.", 503);
+  }
+}
+
+// ---- Console logging of each proxied exchange (headers, bodies) ----
+// On by default outside production; HTTP_LOG_DETAIL=true|false overrides.
+const detailed =
+  process.env.HTTP_LOG_DETAIL !== undefined
+    ? process.env.HTTP_LOG_DETAIL !== "false"
+    : process.env.NODE_ENV !== "production";
+const sensitiveHeader = /^(authorization|cookie|set-cookie|x-api-key|proxy-authorization)$/i;
+const sensitiveKey = /pass(word)?|token|secret|authorization|api[-_]?key|credential|cookie/i;
+const clip = (text: string, max = 800) =>
+  text.length > max ? `${text.slice(0, max)}… (+${text.length - max} chars)` : text;
+const headersOf = (headers: Headers) =>
+  Object.fromEntries(
+    [...headers.entries()].map(([name, value]) => [
+      name,
+      sensitiveHeader.test(name) ? "[REDACTED]" : value,
+    ]),
+  );
+function scrub(value: unknown, depth = 0): unknown {
+  if (depth > 6) return "[…]";
+  if (Array.isArray(value)) return value.slice(0, 20).map((v) => scrub(v, depth + 1));
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [
+        k,
+        sensitiveKey.test(k) ? "[REDACTED]" : scrub(v, depth + 1),
+      ]),
+    );
+  return value;
+}
+async function jsonBody(source: Request | Response) {
+  const type = source.headers.get("content-type") ?? "";
+  if (!type.includes("json")) return null;
+  try {
+    const text = await source.clone().text();
+    if (!text) return null;
+    try {
+      return clip(JSON.stringify(scrub(JSON.parse(text))));
+    } catch {
+      return clip(text);
+    }
+  } catch {
+    return null;
+  }
+}
+const quietRoute = (segments: string[], media: boolean) => media;
+
+export async function proxyBackend(
+  request: NextRequest,
+  segments: string[],
+  media = false,
+) {
+  const started = performance.now();
+  const label = `${request.method} /${media ? "media" : "backend"}/${segments.join("/")}${request.nextUrl.search}`;
+  // The inner call consumes the request body, so read a copy first.
+  const requestBody =
+    detailed && !quietRoute(segments, media) && request.method !== "GET"
+      ? await jsonBody(request)
+      : null;
+  try {
+    const response = await proxyBackendInner(request, segments, media);
+    const ms = Math.round(performance.now() - started);
+    if (!detailed || quietRoute(segments, media)) {
+      console.log(`[proxy] ${label} -> ${response.status} (${ms}ms)`);
+      return response;
+    }
+    const responseBody = await jsonBody(response);
+    const lines = [
+      `[proxy] ${label} -> ${response.status} (${ms}ms)`,
+      `  ▶ request headers  ${clip(JSON.stringify(headersOf(request.headers)), 1200)}`,
+    ];
+    if (requestBody) lines.push(`  ▶ request body     ${requestBody}`);
+    lines.push(
+      `  ◀ response headers ${clip(JSON.stringify(headersOf(response.headers)), 1200)}`,
+    );
+    if (responseBody) lines.push(`  ◀ response body    ${responseBody}`);
+    console.log(lines.join("\n"));
+    return response;
+  } catch (error) {
+    console.error(`[proxy] ${label} -> threw`, error);
+    throw error;
   }
 }

@@ -3,6 +3,7 @@ import {
   Briefcase,
   MessageCircle,
   MessageSquare,
+  Quote,
   ThumbsUp,
   UserCheck,
   UserPlus,
@@ -29,6 +30,12 @@ export function notificationMeta(item: ApiNotification): Meta {
       return { label: "Like", icon: ThumbsUp, href: "/" };
     case "comment":
       return { label: "Comment", icon: MessageSquare, href: "/" };
+    case "repost":
+      return {
+        label: "Quote",
+        icon: Quote,
+        href: item.resourceId ? `/posts/${item.resourceId}` : "/",
+      };
     case "referral_request":
       return {
         label: "Referral request",

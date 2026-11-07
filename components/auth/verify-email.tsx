@@ -84,7 +84,7 @@ export default function VerifyEmail() {
             <h2>Email verified</h2>
             <p>Thanks! Your email address is confirmed.</p>
             <Link className="primary verify-action" href="/">
-              Continue to LayoffCircle
+              Continue to LaidOffCircle
             </Link>
           </>
         )}

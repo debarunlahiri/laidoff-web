@@ -17,6 +17,7 @@ export function toPost(post: ApiPost): Post {
     images: (post.images ?? []).map((path) => mediaUrl(path)!),
     saved: Boolean(post.saved),
     reposted: Boolean(post.reposted),
+    quoted: post.quoted ?? null,
     referral: post.topic === "Offering referrals",
     dislikes: Number(post.dislikes),
     likes: Number(post.likes),
