@@ -3,6 +3,7 @@ import { Dropdown } from "./dropdown";
 import { api, apiMessage, mediaUrl, queryPath } from "@/lib/api";
 import { useConfirm } from "@/providers/confirm-provider";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Plus,
   BookOpen,
@@ -30,7 +31,7 @@ import { Plus,
 } from "lucide-react";
 import {
   Badge,
-  Drawer,
+  DetailPage,
   Empty,
   PageHeader,
   Panel,
@@ -74,6 +75,7 @@ type Detail = {
   warnings: { id: string; reason: string; note: string | null; createdAt: string; postId: string | null; issuedBy: string | null; type: string }[];
   reports: { id: string; category: string; reason: string; status: string; resolutionSummary: string | null; createdAt: string; reporterName: string }[];
   comments: { id: string; text: string; parentId: string | null; createdAt: string; authorName: string }[];
+  summary?: Post;
 };
 const TOPICS = ["Personal experience", "Offering referrals", "Career advice", "Layoff updates", "Hiring", "General discussion"];
 const LIMIT = 20;
@@ -182,16 +184,23 @@ function WarnAuthor({ postId, authorName, count, history, onSent, onDone, onErro
           {WARN_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </Dropdown>
       </label>
-      <textarea
-        className="ac-input"
-        rows={3}
-        maxLength={1000}
-        placeholder="Add a short note (optional)"
-        value={note}
-        disabled={sending}
-        onChange={(e) => setNote(e.target.value)}
-        style={{ width: "100%", marginTop: 8, resize: "vertical" }}
-      />
+      <div className="ac-note-wrap">
+        <textarea
+          className="ac-input"
+          rows={3}
+          maxLength={1000}
+          placeholder="Add a short note (optional) — included in the email"
+          value={note}
+          disabled={sending}
+          onChange={(e) => setNote(e.target.value)}
+          style={{ paddingBottom: 24 }}
+        />
+        {note.length > 0 && (
+          <span className={`ac-note-count${note.length >= 950 ? " full" : note.length >= 800 ? " near" : ""}`}>
+            {note.length}/1000
+          </span>
+        )}
+      </div>
       <div className="ac-row-actions" style={{ marginTop: 8 }}>
         <button className="ac-btn sm" disabled={sending} onClick={() => void send()}><Mail size={13} /> {sending ? "Sending…" : "Send warning email"}</button>
       </div>
@@ -207,7 +216,8 @@ function WarnAuthor({ postId, authorName, count, history, onSent, onDone, onErro
   );
 }
 
-export default function ContentPage() {
+export default function ContentPage({ id }: { id?: string }) {
+  const router = useRouter();
   const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "reported" | "referral" | "poll" | "anonymous">("all");
@@ -234,6 +244,17 @@ export default function ContentPage() {
   // Selection and detail belong to the current result set.
   const queryKey = JSON.stringify([q, filter, topicFilter]);
   useEffect(() => { setSelected(new Set()); }, [queryKey]);
+
+  useEffect(() => {
+    if (!id) return;
+    let live = true;
+    api<Detail>(`/admin/posts/${id}`).then(
+      (r) => live && r.summary && setPreview(r.summary),
+      (e) => live && setMessage(apiMessage(e)),
+    );
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     setDetail(null);
@@ -270,6 +291,7 @@ export default function ContentPage() {
       await api(`/admin/posts/${post.id}`, { method: "DELETE" });
       if (suspendAuthor) await api(`/admin/users/${post.authorId}`, { method: "PATCH", body: { accountStatus: "suspended" } });
       setPreview(null);
+      if (id) router.push("/admin/content");
       dropRows([post.id]);
       setSelected((s) => { const n = new Set(s); n.delete(post.id); return n; });
     }, suspendAuthor ? "Post deleted, author suspended" : "Post deleted");
@@ -302,11 +324,18 @@ export default function ContentPage() {
     setPreview((p) => p && { ...p, topic });
   }, "Topic updated");
 
-  const resolveReports = (status: "resolved" | "dismissed") => act(async () => {
-    if (!preview) return;
-    await api(`/admin/posts/${preview.id}/reports/resolve`, { method: "POST", body: { status } });
-    setDetail((d) => d && { ...d, reports: d.reports.map((r) => (["pending", "reviewing"].includes(r.status) ? { ...r, status } : r)) });
-  }, status === "resolved" ? "Reports resolved" : "Reports dismissed");
+  const resolveReports = async (status: "resolved" | "dismissed") => {
+    if (!(await confirm(
+      status === "resolved"
+        ? { title: "Resolve all open reports?", message: "All pending and reviewing reports on this post will be marked resolved.", confirmLabel: "Resolve" }
+        : { title: "Dismiss all open reports?", message: "All pending and reviewing reports on this post will be dismissed.", confirmLabel: "Dismiss" },
+    ))) return;
+    await act(async () => {
+      if (!preview) return;
+      await api(`/admin/posts/${preview.id}/reports/resolve`, { method: "POST", body: { status } });
+      setDetail((d) => d && { ...d, reports: d.reports.map((r) => (["pending", "reviewing"].includes(r.status) ? { ...r, status } : r)) });
+    }, status === "resolved" ? "Reports resolved" : "Reports dismissed");
+  };
 
   async function removeComment(id: string) {
     if (!(await confirm({ title: "Delete this comment?", message: "The comment and its replies will be permanently removed.", confirmLabel: "Delete comment", tone: "danger" }))) return;
@@ -325,29 +354,42 @@ export default function ContentPage() {
       confirmLabel: "Suspend author",
       tone: "danger",
     }))) return;
+    if (status === "active" && !(await confirm({
+      title: "Reactivate this author?",
+      message: `${preview.authorName} will be able to sign in and post again.`,
+      confirmLabel: "Reactivate",
+    }))) return;
     await act(async () => {
       await api(`/admin/users/${detail.authorId}`, { method: "PATCH", body: { accountStatus: status } });
       setDetail((d) => d && { ...d, authorStatus: status });
     }, status === "suspended" ? "Author suspended" : "Author reactivated");
   }
 
-  const revokeAuthor = () => act(async () => {
-    if (detail) await api(`/admin/users/${detail.authorId}/revoke-sessions`, { method: "POST" });
-  }, "Author signed out everywhere");
+  const revokeAuthor = async () => {
+    if (!(await confirm({
+      title: "Sign out the author everywhere?",
+      message: "All their active sessions will end immediately.",
+      confirmLabel: "Sign out",
+      tone: "danger",
+    }))) return;
+    await act(async () => {
+      if (detail) await api(`/admin/users/${detail.authorId}/revoke-sessions`, { method: "POST" });
+    }, "Author signed out everywhere");
+  };
 
   const copyText = async (text: string, label: string) => flash((await copy(text)) ? `${label} copied` : "Copy failed");
 
   return (
     <>
-      <PageHeader
+      {!id && <PageHeader
         title="Content"
         description="Browse every post on the platform, inspect engagement metrics and remove anything that breaks the rules."
       actions={<Link href="/admin/content/new" className="ac-btn primary"><Plus size={15} /> New post</Link>}
-      />
+      />}
       {message && <p className="adm-error">{message}</p>}
       {notice && <p className="ac-notice" role="status"><Check size={14} /> {notice}</p>}
 
-      <Panel flush>
+      {!id && (<Panel flush>
         <div className="ac-toolbar ac-toolbar-wrap">
           <label className="ac-search" style={{ flex: 1, minWidth: 200 }}>
             <Search size={16} />
@@ -401,7 +443,7 @@ export default function ContentPage() {
           </thead>
           <tbody>
             {data.items.map((p) => (
-              <tr key={p.id} className="ac-row-click" onClick={() => setPreview(p)}>
+              <tr key={p.id} className="ac-row-click" onClick={() => router.push(`/admin/content/${p.id}`)}>
                 <td onClick={(e) => e.stopPropagation()}>
                   <input type="checkbox" aria-label="Select post" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
                 </td>
@@ -431,7 +473,7 @@ export default function ContentPage() {
                 <td style={{ whiteSpace: "nowrap", color: "var(--muted)" }}>{ago(p.createdAt)}</td>
                 <td>
                   <RowMenu items={[
-                    { label: "View details", icon: <Eye size={14} />, onClick: () => setPreview(p) },
+                    { label: "View details", icon: <Eye size={14} />, onClick: () => router.push(`/admin/content/${p.id}`) },
                     { label: "Copy text", icon: <Copy size={14} />, onClick: () => void copyText(p.excerpt, "Text") },
                     { label: "Copy post ID", icon: <Copy size={14} />, onClick: () => void copyText(p.id, "Post ID") },
                     { label: "Delete post", icon: <Trash2 size={14} />, danger: true, onClick: () => void remove(p) },
@@ -445,113 +487,126 @@ export default function ContentPage() {
 
         {!data.items.length && <Empty title="No posts found" hint="Try adjusting your search or filters." />}
         <InfiniteFooter feed={feed} />
-      </Panel>
+      </Panel>)}
 
-      {preview && (
-        <Drawer title="Post detail" onClose={() => setPreview(null)}>
-          <div className="ac-detail-section">
-            <h3>Author</h3>
-            {preview.isAnonymous ? (
-              <p className="ac-muted">Posted anonymously</p>
-            ) : (
-              <div className="ac-facts">
-                <div><dt><User size={13} /> Name</dt><dd>{preview.authorName}</dd></div>
-                <div><dt>Email</dt><dd>{preview.authorEmail}</dd></div>
+      {id && !preview && !message && <p className="ac-muted">Loading…</p>}
+      {id && preview && (
+        <DetailPage
+          backHref="/admin/content"
+          backLabel="All posts"
+          hero={
+            <>
+              <div className="ac-hero-id">
+                <div>
+                  <p className="ac-cell-badges">
+                    <Badge value="muted" label={preview.topic} />
+                    {preview.company && <Badge value="muted" label={preview.company} />}
+                    {preview.isAnonymous && <Badge value="muted" label="Anonymous" />}
+                    {preview.hasReferral && <Badge value="warn" label="Referral" />}
+                    {preview.hasPoll && <Badge value="muted" label="Poll" />}
+                  </p>
+                  <h1>{preview.isAnonymous ? "Anonymous member" : preview.authorName}</h1>
+                  <p>
+                    {preview.isAnonymous ? "Author hidden from members" : preview.authorEmail}
+                    {" · "}
+                    {when(preview.createdAt)}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-          <div className="ac-detail-section">
+              <div className="ac-hero-stats">
+                {[
+                  [<ThumbsUp key="l" size={14} />, "Likes", preview.likes],
+                  [<ThumbsDown key="d" size={14} />, "Dislikes", preview.dislikes],
+                  [<MessageSquare key="c" size={14} />, "Comments", preview.comments],
+                  [<BookOpen key="r" size={14} />, "Reposts", preview.reposts],
+                  [<ExternalLink key="s" size={14} />, "Shares", preview.shares],
+                  [<Eye key="e" size={14} />, "Reports", preview.reports],
+                ].map(([icon, label, value]) => (
+                  <div key={label as string} className={label === "Reports" && Number(value) > 0 ? "flagged" : ""}>
+                    <strong>{value}</strong>
+                    <span>{icon} {label}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          }
+          aside={
+            <>
+              {!preview.isAnonymous && (
+                <section className="ac-card">
+                  <h3>Author</h3>
+                  <dl className="ac-facts">
+                    <div><dt>Name</dt><dd>{preview.authorName}</dd></div>
+                    <div><dt>Email</dt><dd>{preview.authorEmail}</dd></div>
+                    {detail && <div><dt>Status</dt><dd><Badge value={detail.authorStatus} /></dd></div>}
+                  </dl>
+                  {detail && (
+                    <div className="ac-side-actions">
+                      {detail.authorStatus === "suspended" ? (
+                        <button className="ac-btn" disabled={busy} onClick={() => void setAuthorStatus("active")}><ShieldCheck size={14} /> Reactivate</button>
+                      ) : (
+                        !detail.authorIsAdmin && <button className="ac-btn danger" disabled={busy} onClick={() => void setAuthorStatus("suspended")}><ShieldOff size={14} /> Suspend author</button>
+                      )}
+                      <button className="ac-btn" disabled={busy} onClick={() => void revokeAuthor()}><LogOut size={14} /> Sign out everywhere</button>
+                    </div>
+                  )}
+                </section>
+              )}
+              <section className="ac-card">
+                <h3>Moderation</h3>
+                <label className="ac-inline-field">
+                  <span>Topic</span>
+                  <Dropdown compact value={detail?.topic ?? preview.topic} disabled={busy || !detail} onChange={(e) => void changeTopic(e.target.value)}>
+                    {[...new Set([detail?.topic ?? preview.topic, ...TOPICS])].map((t) => <option key={t}>{t}</option>)}
+                  </Dropdown>
+                </label>
+                {detail && detail.reports.length > 0 ? (
+                  <div className="ac-reportlist">
+                    {detail.reports.map((r) => (
+                      <div key={r.id} className="ac-reportitem">
+                        <div><Badge value={r.status} /> <Badge value="muted" label={r.category} /> <span className="ac-cell-sub">by {r.reporterName} · {ago(r.createdAt)}</span></div>
+                        <p>{r.reason}</p>
+                      </div>
+                    ))}
+                    {detail.reports.some((r) => ["pending", "reviewing"].includes(r.status)) && (
+                      <div className="ac-row-actions">
+                        <button className="ac-btn sm" disabled={busy} onClick={() => void resolveReports("resolved")}><Check size={13} /> Resolve</button>
+                        <button className="ac-btn sm" disabled={busy} onClick={() => void resolveReports("dismissed")}><X size={13} /> Dismiss</button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="ac-muted">No reports on this post.</p>
+                )}
+              </section>
+              <WarnAuthor key={preview.id} postId={preview.id} authorName={preview.isAnonymous ? "the author" : preview.authorName} count={detail?.warningCount} history={detail?.warnings} onSent={(n) => setDetail((d) => d && { ...d, warningCount: n })} onDone={() => { flash("Warning emailed"); if (detail) void api<Detail>(`/admin/posts/${detail.id}`).then(setDetail).catch(() => {}); }} onError={setMessage} />
+              <section className="ac-card">
+                <h3>Actions</h3>
+                <div className="ac-side-actions">
+                  <button className="ac-btn" onClick={() => void copyText(detail?.text ?? preview.excerpt, "Text")}><Copy size={15} /> Copy text</button>
+                  <button className="ac-btn" onClick={() => void copyText(preview.id, "Post ID")}><Copy size={15} /> Copy ID</button>
+                  <button className="ac-btn danger" disabled={busy} onClick={() => void remove(preview)}><Trash2 size={15} /> Delete post</button>
+                  {!preview.isAnonymous && <button className="ac-btn danger" disabled={busy} onClick={() => void remove(preview, true)}><ShieldOff size={15} /> Delete &amp; suspend</button>}
+                </div>
+              </section>
+            </>
+          }
+        >
+          <section className="ac-card">
             <h3>Post</h3>
-            <div className="ac-post-preview">
-              <p className="ac-cell-badges" style={{ marginBottom: 8 }}>
-                <Badge value="muted" label={preview.topic} />
-                {preview.company && <Badge value="muted" label={preview.company} />}
-                {preview.isAnonymous && <Badge value="muted" label="Anonymous" />}
-                {preview.hasReferral && <Badge value="warn" label="Referral" />}
-                {preview.hasPoll && <Badge value="muted" label="Poll" />}
-              </p>
-              <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: 14 }}>
-                {detail?.text ?? preview.excerpt}
-              </p>
-            </div>
-          </div>
-          {preview.images?.length > 0 && (
-            <div className="ac-detail-section">
-              <h3><ImageIcon size={12} style={{ display: "inline", marginRight: 4 }} />Images ({preview.images.length})</h3>
+            <p className="ac-post-text">{detail?.text ?? preview.excerpt}</p>
+            {preview.images?.length > 0 && (
               <div className="ac-image-grid">
                 {preview.images.map((file, i) => (
-                  <a
-                    key={file}
-                    href={mediaUrl(file)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ac-image-thumb"
-                  >
+                  <a key={file} href={mediaUrl(file)} target="_blank" rel="noopener noreferrer" className="ac-image-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={mediaUrl(file)} alt={`Image ${i + 1}`} />
                   </a>
                 ))}
               </div>
-            </div>
-          )}
-          <div className="ac-detail-section">
-            <h3>Engagement</h3>
-            <div className="ac-facts">
-              <div><dt><ThumbsUp size={13} /> Likes</dt><dd>{preview.likes}</dd></div>
-              <div><dt><ThumbsDown size={13} /> Dislikes</dt><dd>{preview.dislikes}</dd></div>
-              <div><dt><MessageSquare size={13} /> Comments</dt><dd>{preview.comments}</dd></div>
-              <div><dt><BookOpen size={13} /> Reposts</dt><dd>{preview.reposts}</dd></div>
-              <div><dt><ExternalLink size={13} /> Shares</dt><dd>{preview.shares}</dd></div>
-              <div><dt><Eye size={13} /> Reports</dt><dd style={{ color: preview.reports > 0 ? "var(--red, #e53)" : undefined }}>{preview.reports}</dd></div>
-            </div>
-          </div>
-          <div className="ac-detail-section">
-            <h3>Metadata</h3>
-            <div className="ac-facts">
-              <div><dt>Created</dt><dd>{when(preview.createdAt)}</dd></div>
-            </div>
-          </div>
-          <div className="ac-detail-section">
-            <h3>Moderation</h3>
-            <label className="ac-inline-field">
-              <span>Topic</span>
-              <Dropdown compact value={detail?.topic ?? preview.topic} disabled={busy || !detail} onChange={(e) => void changeTopic(e.target.value)}>
-                {[...new Set([detail?.topic ?? preview.topic, ...TOPICS])].map((t) => <option key={t}>{t}</option>)}
-              </Dropdown>
-            </label>
-            {detail && detail.reports.length > 0 && (
-              <div className="ac-reportlist">
-                {detail.reports.map((r) => (
-                  <div key={r.id} className="ac-reportitem">
-                    <div><Badge value={r.status} /> <Badge value="muted" label={r.category} /> <span className="ac-cell-sub">by {r.reporterName} · {ago(r.createdAt)}</span></div>
-                    <p>{r.reason}</p>
-                  </div>
-                ))}
-                {detail.reports.some((r) => ["pending", "reviewing"].includes(r.status)) && (
-                  <div className="ac-row-actions">
-                    <button className="ac-btn sm" disabled={busy} onClick={() => void resolveReports("resolved")}><Check size={13} /> Resolve reports</button>
-                    <button className="ac-btn sm" disabled={busy} onClick={() => void resolveReports("dismissed")}><X size={13} /> Dismiss reports</button>
-                  </div>
-                )}
-              </div>
             )}
-          </div>
-          {!preview.isAnonymous && detail && (
-            <div className="ac-detail-section">
-              <h3>Author actions</h3>
-              <p className="ac-cell-sub" style={{ marginBottom: 8 }}>Account status: <Badge value={detail.authorStatus} /></p>
-              <div className="ac-row-actions">
-                {detail.authorStatus === "suspended" ? (
-                  <button className="ac-btn sm" disabled={busy} onClick={() => void setAuthorStatus("active")}><ShieldCheck size={13} /> Reactivate</button>
-                ) : (
-                  !detail.authorIsAdmin && <button className="ac-btn danger sm" disabled={busy} onClick={() => void setAuthorStatus("suspended")}><ShieldOff size={13} /> Suspend author</button>
-                )}
-                <button className="ac-btn sm" disabled={busy} onClick={() => void revokeAuthor()}><LogOut size={13} /> Sign out everywhere</button>
-              </div>
-            </div>
-          )}
-          <WarnAuthor key={preview.id} postId={preview.id} authorName={preview.isAnonymous ? "the author" : preview.authorName} count={detail?.warningCount} history={detail?.warnings} onSent={(n) => setDetail((d) => d && { ...d, warningCount: n })} onDone={() => { flash("Warning emailed"); if (detail) void api<Detail>(`/admin/posts/${detail.id}`).then(setDetail).catch(() => {}); }} onError={setMessage} />
-          <div className="ac-detail-section">
+          </section>
+          <section className="ac-card">
             <h3>Comments {detail ? `(${detail.comments.length})` : ""}</h3>
             {!detail && <p className="ac-muted">Loading…</p>}
             {detail && !detail.comments.length && <p className="ac-muted">No comments.</p>}
@@ -564,14 +619,8 @@ export default function ContentPage() {
                 <button className="ac-btn danger sm" aria-label="Delete comment" disabled={busy} onClick={() => void removeComment(c.id)}><Trash2 size={12} /></button>
               </div>
             ))}
-          </div>
-          <div className="ac-drawer-actions">
-            <button className="ac-btn" onClick={() => void copyText(detail?.text ?? preview.excerpt, "Text")}><Copy size={15} /> Copy text</button>
-            <button className="ac-btn" onClick={() => void copyText(preview.id, "Post ID")}><Copy size={15} /> Copy ID</button>
-            <button className="ac-btn danger" disabled={busy} onClick={() => void remove(preview)}><Trash2 size={15} /> Delete post</button>
-            {!preview.isAnonymous && <button className="ac-btn danger" disabled={busy} onClick={() => void remove(preview, true)}><ShieldOff size={15} /> Delete & suspend</button>}
-          </div>
-        </Drawer>
+          </section>
+        </DetailPage>
       )}
     </>
   );

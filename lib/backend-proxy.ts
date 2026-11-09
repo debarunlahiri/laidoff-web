@@ -15,6 +15,7 @@ const roots = new Set([
   "search",
   "ws-ticket",
   "admin",
+  "support",
 ]);
 const backendBase = () =>
   (process.env.BACKEND_API_URL ?? "http://127.0.0.1:9090/api/v1").replace(
@@ -35,7 +36,7 @@ async function proxyBackendInner(
   const publicRead =
     request.method === "GET" &&
     (media ||
-      /^(daily-reminder|search|posts(?:\/topics|\/topic-options|\/[a-zA-Z0-9-]+\/comments)?|referrals|companies(?:\/[a-zA-Z0-9-]+)?|users(?:\/[a-zA-Z0-9-]+(?:\/stats)?)?|insights(?:\/[-a-zA-Z0-9_]+)*)$/.test(
+      /^(daily-reminder|search|posts(?:\/topics|\/topic-options|\/[a-zA-Z0-9-]+\/comments)?|referrals|companies(?:\/[a-zA-Z0-9-]+)?|users(?:\/[a-zA-Z0-9_-]+(?:\/stats)?)?|insights(?:\/[-a-zA-Z0-9_]+)*)$/.test(
         segments.join("/"),
       ));
   if (!token && !publicRead) return errorResponse("Please sign in", 401);
@@ -64,9 +65,14 @@ async function proxyBackendInner(
     if (contentType) headers.set("Content-Type", contentType);
     const agent = request.headers.get("user-agent");
     if (agent) headers.set("User-Agent", agent);
-    // Chat attachments (3 files of up to 5 MB) need more room than other writes.
+    // Allow multipart overhead for private chat and support attachments.
     const maxBody =
-      segments[0] === "conversations" ? 17 * 1024 * 1024 : 6 * 1024 * 1024;
+      segments[0] === "support" ||
+      (segments[0] === "admin" && segments[1] === "support")
+        ? 27 * 1024 * 1024
+        : segments[0] === "conversations"
+          ? 17 * 1024 * 1024
+          : 6 * 1024 * 1024;
     let body: Uint8Array | undefined;
     if (mutation) {
       const reader = request.body?.getReader();
@@ -90,7 +96,12 @@ async function proxyBackendInner(
       headers,
       body: body as BodyInit | undefined,
       cache: "no-store",
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(
+        segments[0] === "support" ||
+          (segments[0] === "admin" && segments[1] === "support")
+          ? 60000
+          : 20000,
+      ),
     });
     const responseHeaders = new Headers({ "Cache-Control": "no-store" });
     for (const name of [
@@ -118,10 +129,14 @@ const detailed =
   process.env.HTTP_LOG_DETAIL !== undefined
     ? process.env.HTTP_LOG_DETAIL !== "false"
     : process.env.NODE_ENV !== "production";
-const sensitiveHeader = /^(authorization|cookie|set-cookie|x-api-key|proxy-authorization)$/i;
-const sensitiveKey = /pass(word)?|token|secret|authorization|api[-_]?key|credential|cookie/i;
+const sensitiveHeader =
+  /^(authorization|cookie|set-cookie|x-api-key|proxy-authorization)$/i;
+const sensitiveKey =
+  /pass(word)?|token|secret|authorization|api[-_]?key|credential|cookie/i;
 const clip = (text: string, max = 800) =>
-  text.length > max ? `${text.slice(0, max)}… (+${text.length - max} chars)` : text;
+  text.length > max
+    ? `${text.slice(0, max)}… (+${text.length - max} chars)`
+    : text;
 const headersOf = (headers: Headers) =>
   Object.fromEntries(
     [...headers.entries()].map(([name, value]) => [
@@ -131,7 +146,8 @@ const headersOf = (headers: Headers) =>
   );
 function scrub(value: unknown, depth = 0): unknown {
   if (depth > 6) return "[…]";
-  if (Array.isArray(value)) return value.slice(0, 20).map((v) => scrub(v, depth + 1));
+  if (Array.isArray(value))
+    return value.slice(0, 20).map((v) => scrub(v, depth + 1));
   if (value && typeof value === "object")
     return Object.fromEntries(
       Object.entries(value).map(([k, v]) => [

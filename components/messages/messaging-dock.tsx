@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import LinkifiedText from "@/components/messages/linkified-text";
 import { useFileDrop } from "@/hooks/use-file-drop";
 import { pastedImages } from "@/lib/paste-files";
@@ -174,135 +175,147 @@ export default function MessagingDock() {
             <i className="msg-online" />
           </span>
           {totalUnread > 0 && (
-            <span className="msg-count">{totalUnread > 99 ? "99+" : totalUnread}</span>
-          )}
-        </button>
-      ) : (
-      <aside
-        className={`msg-dock${collapsed ? " collapsed" : ""}`}
-        aria-label="Messaging"
-      >
-        <div className="msg-dock-top">
-        <button
-          type="button"
-          className="msg-dock-header"
-          aria-expanded={!collapsed}
-          onClick={toggle}
-        >
-          <span className="msg-dock-me">
-            <Avatar
-              initials={initials(currentUser.name)}
-              src={currentUser.profileImageUrl}
-              small
-            />
-            <i className="msg-online" />
-          </span>
-          <strong>Messaging</strong>
-          {totalUnread > 0 && (
-            <span className="msg-count" aria-label={`${totalUnread} unread`}>
+            <span className="msg-count">
               {totalUnread > 99 ? "99+" : totalUnread}
             </span>
           )}
-          <span className="msg-dock-chevron">
-            {collapsed ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </span>
         </button>
-        <button
-          type="button"
-          className="msg-dock-hide"
-          aria-label="Hide messaging to the side"
-          title="Hide to the side"
-          onClick={() => tuck(true)}
+      ) : (
+        <aside
+          className={`msg-dock${collapsed ? " collapsed" : ""}`}
+          aria-label="Messaging"
         >
-          <ChevronsRight size={18} />
-        </button>
-        </div>
-        {!collapsed && (
-          <>
-            <label className="msg-dock-search">
-              <Search size={16} />
-              <input
-                aria-label="Search messages"
-                placeholder="Search messages"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-            </label>
-            <div className="msg-dock-tabs" role="tablist">
-              <button
-                role="tab"
-                aria-selected={tab === "focused"}
-                className={tab === "focused" ? "active" : ""}
-                onClick={() => setTab("focused")}
-              >
-                Focused
-              </button>
-              <button
-                role="tab"
-                aria-selected={tab === "unread"}
-                className={tab === "unread" ? "active" : ""}
-                onClick={() => setTab("unread")}
-              >
-                Unread{totalUnread > 0 && ` (${totalUnread})`}
-              </button>
-            </div>
-            <div className="msg-dock-list">
-              {list.loading && !rows.length && (
-                <p className="msg-dock-note" role="status">
-                  Loading conversations…
-                </p>
-              )}
-              {list.error && (
-                <p className="msg-dock-note" role="alert">
-                  {list.error}
-                </p>
-              )}
-              {!list.loading && !shown.length && (
-                <p className="msg-dock-note">
-                  {term
-                    ? "No conversations match your search."
-                    : tab === "unread"
-                      ? "No unread messages."
-                      : "No conversations yet."}
-                </p>
-              )}
-              {shown.map((row) => (
-                <button
-                  key={row.id}
-                  type="button"
-                  className={`msg-dock-row${row.unreadCount ? " unread" : ""}${open.includes(row.id) ? " active" : ""}`}
-                  onClick={() => openChat(row.id)}
+          <div className="msg-dock-top">
+            <button
+              type="button"
+              className="msg-dock-header"
+              aria-expanded={!collapsed}
+              onClick={toggle}
+            >
+              <span className="msg-dock-me">
+                <Avatar
+                  initials={initials(currentUser.name)}
+                  src={currentUser.profileImageUrl}
+                  small
+                />
+                <i className="msg-online" />
+              </span>
+              <strong>Messaging</strong>
+              {totalUnread > 0 && (
+                <span
+                  className="msg-count"
+                  aria-label={`${totalUnread} unread`}
                 >
-                  <Avatar
-                    initials={row.initials}
-                    src={row.profileImageUrl}
-                    color="blue"
-                  />
-                  <span className="msg-dock-row-body">
-                    <span className="msg-dock-row-top">
-                      <strong>{row.name}</strong>
-                      <time>{row.time}</time>
-                    </span>
-                    <span className="msg-dock-row-snippet">
-                      {row.lastSenderId === currentUser.id && <b>You: </b>}
-                      {row.preview ?? "Start a conversation"}
-                    </span>
-                  </span>
-                  {row.unreadCount > 0 && <i className="msg-new-dot" />}
-                </button>
-              ))}
-              {list.hasMore && (
-                <button
-                  className="text-button msg-dock-more"
-                  onClick={() => void list.loadMore()}
-                >
-                  Load more
-                </button>
+                  {totalUnread > 99 ? "99+" : totalUnread}
+                </span>
               )}
-            </div>
-          </>
-        )}
-      </aside>
+              <span className="msg-dock-chevron">
+                {collapsed ? (
+                  <ChevronUp size={20} />
+                ) : (
+                  <ChevronDown size={20} />
+                )}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="msg-dock-hide"
+              aria-label="Hide messaging to the side"
+              title="Hide to the side"
+              onClick={() => tuck(true)}
+            >
+              <ChevronsRight size={18} />
+            </button>
+          </div>
+          {!collapsed && (
+            <>
+              <label className="msg-dock-search">
+                <Search size={16} />
+                <input
+                  aria-label="Search messages"
+                  placeholder="Search messages"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </label>
+              <div className="msg-dock-tabs" role="tablist">
+                <button
+                  role="tab"
+                  aria-selected={tab === "focused"}
+                  className={tab === "focused" ? "active" : ""}
+                  onClick={() => setTab("focused")}
+                >
+                  Focused
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={tab === "unread"}
+                  className={tab === "unread" ? "active" : ""}
+                  onClick={() => setTab("unread")}
+                >
+                  Unread{totalUnread > 0 && ` (${totalUnread})`}
+                </button>
+              </div>
+              <div className="msg-dock-list">
+                {list.loading && !rows.length && (
+                  <p className="msg-dock-note" role="status">
+                    Loading conversations…
+                  </p>
+                )}
+                {list.error && (
+                  <p className="msg-dock-note" role="alert">
+                    {list.error}
+                  </p>
+                )}
+                {!list.loading && !shown.length && (
+                  <p className="msg-dock-note">
+                    {term
+                      ? "No conversations match your search."
+                      : tab === "unread"
+                        ? "No unread messages."
+                        : "No conversations yet."}
+                  </p>
+                )}
+                {shown.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    className={`msg-dock-row${row.unreadCount ? " unread" : ""}${open.includes(row.id) ? " active" : ""}`}
+                    onClick={() => openChat(row.id)}
+                  >
+                    <Avatar
+                      initials={row.initials}
+                      src={row.profileImageUrl}
+                      color="blue"
+                    />
+                    <span className="msg-dock-row-body">
+                      <span className="msg-dock-row-top">
+                        <strong>
+                          {row.name}
+                          <VerifiedBadge type={row.badge} />
+                        </strong>
+                        <time>{row.time}</time>
+                      </span>
+                      <span className="msg-dock-row-snippet">
+                        {row.lastSenderId === currentUser.id && <b>You: </b>}
+                        {row.preview ?? "Start a conversation"}
+                      </span>
+                    </span>
+                    {row.unreadCount > 0 && <i className="msg-new-dot" />}
+                  </button>
+                ))}
+                {list.hasMore && (
+                  <button
+                    className="text-button msg-dock-more"
+                    onClick={() => void list.loadMore()}
+                  >
+                    Load more
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </aside>
       )}
     </>
   );
@@ -425,7 +438,10 @@ function ChatWindow({
         >
           <Avatar initials={row.initials} src={row.profileImageUrl} small />
           <span>
-            <strong>{row.name}</strong>
+            <strong>
+              {row.name}
+              <VerifiedBadge type={row.badge} />
+            </strong>
             <small className={partnerTyping ? "typing-label" : undefined}>
               {partnerTyping ? "typing…" : row.role}
             </small>

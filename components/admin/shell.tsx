@@ -17,6 +17,7 @@ import {
   Flag,
   ListChecks,
   Hash,
+  Headset,
   LayoutDashboard,
   LoaderCircle,
   Mail,
@@ -60,6 +61,7 @@ const crumbs: Record<string, string> = {
   "/admin/email": "Email",
   "/admin/audit": "Audit log",
   "/admin/system": "System health",
+  "/admin/support": "Support tickets",
 };
 
 export default function AdminShell({
@@ -111,9 +113,7 @@ export default function AdminShell({
     },
     {
       title: "Members",
-      items: [
-        { href: "/admin/users", label: "Users", icon: Users },
-      ],
+      items: [{ href: "/admin/users", label: "Users", icon: Users }],
     },
     {
       title: "Content",
@@ -132,7 +132,11 @@ export default function AdminShell({
           badge: pending.pendingNotes,
         },
         { href: "/admin/hashtags", label: "Hashtags", icon: Hash },
-        { href: "/admin/report-options", label: "Report options", icon: ListChecks },
+        {
+          href: "/admin/report-options",
+          label: "Report options",
+          icon: ListChecks,
+        },
       ],
     },
     {
@@ -151,6 +155,7 @@ export default function AdminShell({
     {
       title: "Platform",
       items: [
+        { href: "/admin/support", label: "Support tickets", icon: Headset },
         { href: "/admin/algorithm", label: "Feed algorithm", icon: Settings2 },
         { href: "/admin/email", label: "Email", icon: Mail },
         { href: "/admin/audit", label: "Audit log", icon: ScrollText },
@@ -160,6 +165,11 @@ export default function AdminShell({
   ];
   const active = (href: string) =>
     href === "/admin" ? pathname === href : pathname.startsWith(href);
+  const pathParts = pathname.split("/").filter(Boolean);
+  const isDetailPage = pathParts.length > 2;
+  const parentPath = isDetailPage
+    ? `/${pathParts.slice(0, 2).join("/")}`
+    : null;
   const current =
     crumbs[pathname] ??
     crumbs[`/${pathname.split("/").slice(1, 3).join("/")}`] ??
@@ -214,9 +224,18 @@ export default function AdminShell({
               {open ? <X size={20} /> : <Menu size={20} />}
             </button>
             <div className="ac-crumbs">
-              <span>Admin</span>
-              <i>/</i>
-              <strong>{current}</strong>
+              {isDetailPage && parentPath ? (
+                <Link href={parentPath} className="ac-crumb-back">
+                  <ArrowLeft size={15} />
+                  {crumbs[parentPath] ?? current}
+                </Link>
+              ) : (
+                <>
+                  <span>Admin</span>
+                  <i>/</i>
+                  <strong>{current}</strong>
+                </>
+              )}
             </div>
             <div className="ac-topbar-right">
               <ThemeToggle />

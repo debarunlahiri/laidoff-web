@@ -11,4 +11,6 @@ export const pageHeadings: Record<string, string> = {
   Explore: "Find your people. Find your path.",
   Notifications: "Everything that needs your attention.",
   More: "More",
+  Support: "Help & support",
+  Settings: "Settings",
 };

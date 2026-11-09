@@ -26,7 +26,9 @@ export default function NetworkView() {
       )
       .map((link) => link.requester_id),
   );
-  const discover = suggestedPeople.filter((person) => !requesters.has(person.id ?? ""));
+  const discover = suggestedPeople.filter(
+    (person) => !requesters.has(person.id ?? ""),
+  );
   return (
     <>
       <NetworkStats stats={networkStats} />

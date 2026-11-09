@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import Dialog from "@/components/ui/dialog";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
@@ -61,14 +62,17 @@ export default function EngagementDialog({
       <ul className="engagement-list">
         {list.data.map((person) => (
           <li key={person.id}>
-            <UserLink id={person.id}>
+            <UserLink id={person.id} username={person.username}>
               <Avatar
                 initials={initials(person.name)}
                 color="blue"
                 src={person.profileImageUrl}
               />
               <span>
-                <strong>{person.name}</strong>
+                <strong>
+                  {person.name}
+                  <VerifiedBadge type={person.badge} />
+                </strong>
                 <small>{person.role || "Community member"}</small>
               </span>
             </UserLink>

@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import PollView from "@/components/feed/poll-view";
 import PostImages from "@/components/feed/post-images";
 import CommunityNote from "@/components/community-notes/community-note";
@@ -10,7 +11,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import MarkdownEditor from "@/components/ui/markdown-editor";
 import RichText from "@/components/ui/rich-text";
-import { api, apiMessage, displayDate, displayTime, invalidate } from "@/lib/api";
+import {
+  api,
+  apiMessage,
+  displayDate,
+  displayTime,
+  invalidate,
+} from "@/lib/api";
 import Popover from "@/components/ui/popover";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
@@ -240,14 +247,20 @@ export default function PostCard({
       onClick={full ? undefined : openPost}
     >
       <div className="post-heading">
-        <UserLink id={post.authorId}>
+        <UserLink id={post.authorId} username={post.username}>
           <Avatar
             initials={post.avatar}
             color={post.color}
             src={post.avatarUrl}
           />
           <div className="author">
-            <strong>{post.name}</strong>
+            <strong>
+              {post.name}
+              <VerifiedBadge type={post.badge} />
+            </strong>
+            {post.username && (
+              <span className="user-handle">@{post.username}</span>
+            )}
             <span>{post.role}</span>
             <span className="post-time">
               {post.time} <span>·</span> <Earth size={12} />

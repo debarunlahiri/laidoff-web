@@ -127,13 +127,13 @@ a.quoted-post:hover { border-color: color-mix(in srgb, var(--green) 45%, var(--l
 .post-copy.is-clamped .rt-table-wrap { max-height: 9em; overflow: hidden; }
 
 /* Links in rich text are blue, with the site's favicon in front. */
-.post-copy a:not(.post-hashtag) {
+.post-copy a:not(.post-hashtag):not(.post-mention) {
   color: var(--green);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
-.post-copy a:not(.post-hashtag):hover { filter: brightness(0.85); }
+.post-copy a:not(.post-hashtag):not(.post-mention):hover { filter: brightness(0.85); }
 .rt-favicon {
   display: inline-block;
   width: 16px;

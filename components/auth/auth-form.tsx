@@ -1,5 +1,6 @@
 "use client";
 
+import UsernameInput from "@/components/ui/username-input";
 import BrandLogo from "@/components/ui/brand-logo";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,6 +39,8 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const registering = mode === "register";
   const { user, loading, login, register, loginGoogle } = useAuth();
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameValid, setUsernameValid] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -152,6 +155,10 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 setError("Please choose a stronger password.");
                 return;
               }
+              if (registering && !usernameValid) {
+                setError("Please choose an available username.");
+                return;
+              }
               if (registering && password !== confirm) {
                 setError("Your passwords don’t match.");
                 return;
@@ -163,7 +170,12 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
               }
               try {
                 if (registering)
-                  await register(name.trim(), email.trim(), password);
+                  await register(
+                    name.trim(),
+                    username.trim().replace(/^@/, "").toLowerCase(),
+                    email.trim(),
+                    password,
+                  );
                 else await login(email.trim(), password);
                 router.replace(destination);
               } catch (error) {
@@ -187,6 +199,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                     placeholder="Your full name"
                   />
                 </label>
+              )}
+              {registering && (
+                <UsernameInput
+                  value={username}
+                  onChange={setUsername}
+                  onValidity={setUsernameValid}
+                />
               )}
               <label htmlFor="email-address">
                 Email address

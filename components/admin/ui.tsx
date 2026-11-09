@@ -52,7 +52,8 @@ export const when = (value: string | null) =>
 
 // ---------- Console building blocks ----------
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
+import Link from "next/link";
 
 export function PageHeader({
   title,
@@ -229,3 +230,29 @@ export const ago = (value: string | null) => {
   void units;
   return new Date(iso).toLocaleDateString();
 };
+
+// Full-page detail view: back link, a hero card, then main + sidebar columns.
+export function DetailPage({
+  backHref,
+  backLabel,
+  hero,
+  aside,
+  children,
+}: {
+  title?: string;
+  backHref: string;
+  backLabel: string;
+  hero: ReactNode;
+  aside: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="ac-dp">
+      <section className="ac-card ac-dp-hero">{hero}</section>
+      <div className="ac-dp-grid">
+        <div className="ac-dp-main">{children}</div>
+        <aside className="ac-dp-side">{aside}</aside>
+      </div>
+    </div>
+  );
+}

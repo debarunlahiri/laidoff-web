@@ -1,3 +1,4 @@
+import VerifiedBadge from "@/components/ui/verified-badge";
 import { displayDate, mediaUrl } from "@/lib/api";
 import type { ApiQuotedPost } from "@/lib/api-types";
 import Link from "next/link";
@@ -23,7 +24,10 @@ export default function QuotedPost({
     <>
       <span className="quoted-head">
         <Quote size={13} aria-hidden="true" />
-        <strong>{post.name}</strong>
+        <strong>
+          {post.name}
+          <VerifiedBadge type={post.badge} />
+        </strong>
         <span>· {displayDate(post.createdAt)}</span>
       </span>
       {post.text && <span className="quoted-text">{plain(post.text)}</span>}

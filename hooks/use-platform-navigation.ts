@@ -9,15 +9,19 @@ export function usePlatformNavigation() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [mobileNav, setMobileNav] = useState(false);
-  const section = pathname.startsWith("/referrals/")
-    ? "Referrals"
-    : pathname.startsWith("/users/")
-      ? "Member profile"
-      : pathname.startsWith("/search")
-        ? "Search"
-        : Object.keys(sectionPaths).find(
-            (label) => sectionPaths[label] === pathname,
-          ) || "Home";
+  const section = pathname.startsWith("/settings")
+    ? "Settings"
+    : pathname.startsWith("/support")
+    ? "Support"
+    : pathname.startsWith("/referrals/")
+      ? "Referrals"
+      : pathname.startsWith("/users/")
+        ? "Member profile"
+        : pathname.startsWith("/search")
+          ? "Search"
+          : Object.keys(sectionPaths).find(
+              (label) => sectionPaths[label] === pathname,
+            ) || "Home";
 
   function setSection(label: string) {
     const path = sectionPaths[label];

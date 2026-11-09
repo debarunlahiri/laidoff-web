@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import CommentForm from "@/components/feed/comment-form";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
@@ -75,7 +76,7 @@ export default function CommentItem({
 
   return (
     <div className={`comment${isReply ? " comment-reply" : ""}`}>
-      <UserLink id={comment.authorId}>
+      <UserLink id={comment.authorId} username={comment.username}>
         <Avatar
           initials={initials(comment.name)}
           src={comment.profileImageUrl}
@@ -85,8 +86,14 @@ export default function CommentItem({
       <div className="comment-body">
         <div className="comment-bubble">
           <div className="comment-head">
-            <UserLink id={comment.authorId}>
-              <strong>{comment.name}</strong>
+            <UserLink id={comment.authorId} username={comment.username}>
+              <strong>
+                {comment.name}
+                <VerifiedBadge type={comment.badge} />
+              </strong>
+              {comment.username && (
+                <span className="user-handle"> @{comment.username}</span>
+              )}
             </UserLink>
             <time dateTime={comment.createdAt}>
               {displayDate(comment.createdAt)}

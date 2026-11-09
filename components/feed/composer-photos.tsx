@@ -55,7 +55,9 @@ export function usePhotoPicker({
         const files = Array.from(event.target.files ?? []);
         event.target.value = "";
         if (!files.length) return;
-        const results = await Promise.allSettled(files.map((file) => readImageFile(file)));
+        const results = await Promise.allSettled(
+          files.map((file) => readImageFile(file)),
+        );
         const good = results.flatMap((r) =>
           r.status === "fulfilled" ? [r.value] : [],
         );

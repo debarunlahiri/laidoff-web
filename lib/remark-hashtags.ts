@@ -25,17 +25,24 @@ export default function remarkHashtags() {
       const parts: MarkdownNode[] = [];
       let end = 0;
       for (const match of text.matchAll(
-        /(?<![\p{L}\p{N}_#/])#[\p{L}\p{N}_]+/gu,
+        /(?<![\p{L}\p{N}_#@/.])(?:#[\p{L}\p{N}_]+|@[a-zA-Z0-9_]{3,30}(?![a-zA-Z0-9_@.]))/gu,
       )) {
         const tag = match[0];
         // The search endpoint accepts at most 100 characters.
         if (tag.length > 100) continue;
         if (match.index > end)
           parts.push({ type: "text", value: text.slice(end, match.index) });
+        const mention = tag.startsWith("@");
         parts.push({
           type: "link",
-          url: searchHref(tag, "posts"),
-          data: { hProperties: { className: ["post-hashtag"] } },
+          url: mention
+            ? `/users/${tag.slice(1).toLowerCase()}`
+            : searchHref(tag, "posts"),
+          data: {
+            hProperties: {
+              className: [mention ? "post-mention" : "post-hashtag"],
+            },
+          },
           children: [{ type: "text", value: tag }],
         });
         end = match.index + tag.length;

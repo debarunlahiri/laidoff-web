@@ -20,6 +20,7 @@ import { googleIdToken } from "@/lib/firebase";
 export type AuthUser = {
   id: string;
   name: string;
+  username?: string;
   email: string;
   role?: string;
   about?: string;
@@ -29,6 +30,7 @@ export type AuthUser = {
   location?: string;
   profileImageUrl?: string | null;
   coverImageUrl?: string | null;
+  badge?: "blue" | "gold" | null;
   googleLinked?: boolean;
   // false until the member confirms the link we email them.
   emailVerified?: boolean;
@@ -44,6 +46,7 @@ export type ProfilePatch = Partial<
   Pick<
     AuthUser,
     | "name"
+    | "username"
     | "role"
     | "about"
     | "skills"
@@ -58,7 +61,12 @@ type AuthState = {
   sessionError: string;
   refreshSession: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (
+    name: string,
+    username: string,
+    email: string,
+    password: string,
+  ) => Promise<void>;
   loginGoogle: () => Promise<void>;
   linkGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -173,8 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionError,
         refreshSession,
         login: (email, password) => complete("login", { email, password }),
-        register: (name, email, password) =>
-          complete("register", { name, email, password }),
+        register: (name, username, email, password) =>
+          complete("register", { name, username, email, password }),
         loginGoogle: async () =>
           complete("google", { idToken: await googleIdToken() }),
         linkGoogle: async () => {

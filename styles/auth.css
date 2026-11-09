@@ -544,3 +544,28 @@ html[data-theme="dark"] .conn-banner {
   border-color: #a04444;
   color: #f0b4b4;
 }
+
+.username-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.username-field > span {
+  color: var(--muted, #667085);
+  font-weight: 600;
+}
+.username-field > input {
+  flex: 1;
+}
+.username-hint {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+  color: var(--muted, #667085);
+}
+.username-hint.available {
+  color: #12805c;
+}
+.username-hint.unavailable {
+  color: #c0362c;
+}

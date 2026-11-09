@@ -37,12 +37,12 @@
 .post-copy a {
   text-decoration: underline;
 }
-.post-copy .post-hashtag {
+.post-copy :is(.post-hashtag, .post-mention) {
   color: var(--green);
   font-weight: 600;
   text-decoration: none;
 }
-.post-copy .post-hashtag:is(:hover, :focus-visible) {
+.post-copy :is(.post-hashtag, .post-mention):is(:hover, :focus-visible) {
   text-decoration: underline;
 }
 .post-copy :is(pre, :not(pre) > code) {
@@ -199,7 +199,7 @@ html[data-theme="dark"] .stat-link:focus-visible {
   color: var(--ink);
 }
 html[data-theme="dark"] .read-more,
-html[data-theme="dark"] .post-copy .post-hashtag {
+html[data-theme="dark"] .post-copy :is(.post-hashtag, .post-mention) {
   color: #7f9bff;
 }
 html[data-theme="dark"] .engagement-list li {

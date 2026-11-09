@@ -479,7 +479,8 @@ html[data-theme="dark"] .message.incoming .msg-link {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
-.more-grid > button {
+.more-grid > button,
+.more-grid > a {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -493,7 +494,8 @@ html[data-theme="dark"] .message.incoming .msg-link {
   font-weight: 600;
   cursor: pointer;
 }
-.more-grid > button:active {
+.more-grid > button:active,
+.more-grid > a:active {
   background: var(--mint);
 }
 .more-tile-icon {

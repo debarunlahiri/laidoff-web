@@ -14,12 +14,7 @@ import type {
 } from "@/lib/api-types";
 import { levelLabels, workModeLabels } from "@/lib/referral-meta";
 import { usePlatform } from "@/providers/platform-provider";
-import {
-  BriefcaseBusiness,
-  Globe2,
-  Layers,
-  MapPin,
-} from "lucide-react";
+import { BriefcaseBusiness, Globe2, Layers, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -115,7 +110,7 @@ export default function ReferralCreateView() {
               <input
                 required
                 maxLength={120}
-                placeholder="e.g. Senior Frontend Engineer"
+                placeholder="e.g. Store Manager, Nurse, or Software Engineer"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />

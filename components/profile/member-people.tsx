@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
 import { useApiList } from "@/hooks/use-api-resource";
@@ -49,14 +50,17 @@ export function MemberPeople({
     <div className="member-list">
       {list.data.map((person) => (
         <div className="card member-person" key={person.id}>
-          <UserLink id={person.id}>
+          <UserLink id={person.id} username={person.username}>
             <Avatar
               initials={initials(person.name)}
               src={person.profileImageUrl}
               color="blue"
             />
             <span>
-              <strong>{person.name}</strong>
+              <strong>
+                {person.name}
+                <VerifiedBadge type={person.badge} />
+              </strong>
               <small>{person.role}</small>
             </span>
           </UserLink>
@@ -101,7 +105,10 @@ export function MemberReactions({
               color="blue"
             />
             <span>
-              <strong>{item.name}</strong>
+              <strong>
+                {item.name}
+                <VerifiedBadge type={item.badge} />
+              </strong>
               <small>{item.role}</small>
             </span>
           </UserLink>

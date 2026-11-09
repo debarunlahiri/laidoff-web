@@ -48,7 +48,7 @@ export const fieldPresets: {
   { label: "Resume / CV", type: "file", required: true },
   { label: "Why are you a good fit?", type: "textarea", required: true },
   { label: "LinkedIn profile", type: "url", required: false },
-  { label: "Portfolio or GitHub", type: "url", required: false },
+  { label: "Portfolio or work samples", type: "url", required: false },
   { label: "Years of experience", type: "number", required: false },
   { label: "Current location", type: "text", required: false },
   {

@@ -19,8 +19,11 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     if (!publicPage && !loading && !user && !sessionError)
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [loading, user, sessionError, pathname, router, publicPage]);
-  // Unverified and past the preview window: nothing but the verification screen.
-  if (user?.verificationExpired) return <VerificationRequired />;
+  // Expired verification blocks community access; private support stays available.
+  const supportPage =
+    pathname === "/support" || pathname.startsWith("/support/");
+  if (user?.verificationExpired && !supportPage)
+    return <VerificationRequired />;
   if (publicPage) return children;
   if (sessionError)
     return (

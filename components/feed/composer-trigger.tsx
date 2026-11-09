@@ -3,45 +3,32 @@
 import { userInitials } from "@/providers/auth-provider";
 import {
   AddPhotosLabel,
-  PhotoGrid,
   usePhotoPicker,
 } from "@/components/feed/composer-photos";
-import { maxPostImages, readImageFile } from "@/lib/image-file";
-import SelectField from "@/components/ui/select-field";
-import CompanyAutocomplete from "@/components/ui/company-autocomplete";
+import { maxPostImages } from "@/lib/image-file";
+import PostComposerFields from "@/components/feed/post-composer-fields";
 import Avatar from "@/components/ui/avatar";
-import { pastedImages } from "@/lib/paste-files";
 import { usePlatform } from "@/providers/platform-provider";
 import { useImageDrop } from "@/hooks/use-image-drop";
-import { apiMessage, requireSignIn } from "@/lib/api";
-import PollBuilder from "@/components/feed/poll-builder";
-import { BarChart3, Earth, ImagePlus, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { requireSignIn } from "@/lib/api";
+import { BarChart3, Earth, ImagePlus } from "lucide-react";
+import { useState } from "react";
 
 export default function ComposerTrigger() {
   const {
     currentUser,
-    draft,
-    setDraft,
-    topic,
     setTopic,
-    company,
-    setCompany,
     anonymous,
-    setAnonymous,
     publish,
     postSaving,
     postImages,
     addPostImages,
-    removePostImage,
     canPublish,
     notify,
-    postTopics,
     pollOpen,
     setPollOpen,
   } = usePlatform();
   const [expanded, setExpanded] = useState(false);
-  const textarea = useRef<HTMLTextAreaElement>(null);
 
   const { dragging, dropProps } = useImageDrop({
     onImages: (dataUrls) => {
@@ -61,10 +48,6 @@ export default function ComposerTrigger() {
     onError: notify,
     onPicked: () => setExpanded(true),
   });
-
-  useEffect(() => {
-    if (expanded) textarea.current?.focus();
-  }, [expanded]);
 
   function expand(nextTopic?: string) {
     if (!currentUser) {
@@ -121,59 +104,8 @@ export default function ComposerTrigger() {
             if (await publish()) setExpanded(false);
           }}
         >
-          <textarea
-            ref={textarea}
-            aria-label="Post text"
-            placeholder="What’s on your mind?"
-            value={draft}
-            onPaste={async (event) => {
-              const pasted = pastedImages(event);
-              if (!pasted.length) return;
-              const results = await Promise.allSettled(
-                pasted.map((f) => readImageFile(f)),
-              );
-              const good = results.flatMap((r) =>
-                r.status === "fulfilled" ? [r.value] : [],
-              );
-              const failed = results.find((r) => r.status === "rejected");
-              if (failed)
-                notify(apiMessage((failed as PromiseRejectedResult).reason));
-              if (good.length) addPostImages(good);
-            }}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              event.target.style.height = "auto";
-              event.target.style.height = `${event.target.scrollHeight}px`;
-            }}
-          />
-          <small className="subtle-text">
-            Markdown supported. Use **bold**, # headings, or triple backticks
-            for code blocks.
-          </small>
-          <PhotoGrid images={postImages} onRemove={removePostImage} />
-          {pollOpen && <PollBuilder />}
-          <div className="form-row">
-            <SelectField
-              label="Topic (optional)"
-              placeholder="No topic"
-              value={topic}
-              options={[
-                { value: "", label: "No topic" },
-                ...postTopics.map((item) => ({ value: item, label: item })),
-              ]}
-              onChange={setTopic}
-            />
-            <CompanyAutocomplete value={company} onChange={setCompany} />
-          </div>
+          <PostComposerFields />
           <div className="inline-composer-bottom">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={anonymous}
-                onChange={(event) => setAnonymous(event.target.checked)}
-              />
-              Post anonymously
-            </label>
             <div>
               <button
                 type="button"
@@ -190,27 +122,29 @@ export default function ComposerTrigger() {
         </form>
       )}
       {picker.input}
-      <div className="composer-tools">
-        <button
-          disabled={expanded && postImages.length >= maxPostImages}
-          onClick={() => {
-            expand();
-            if (currentUser) picker.open();
-          }}
-        >
-          <AddPhotosLabel count={postImages.length} />
-        </button>
-        <button
-          type="button"
-          aria-pressed={pollOpen}
-          onClick={() => {
-            expand();
-            if (currentUser) setPollOpen(!pollOpen);
-          }}
-        >
-          <BarChart3 size={16} /> {pollOpen ? "Remove poll" : "Add poll"}
-        </button>
-      </div>
+      {!expanded && (
+        <div className="composer-tools">
+          <button
+            disabled={postImages.length >= maxPostImages}
+            onClick={() => {
+              expand();
+              if (currentUser) picker.open();
+            }}
+          >
+            <AddPhotosLabel count={postImages.length} />
+          </button>
+          <button
+            type="button"
+            aria-pressed={pollOpen}
+            onClick={() => {
+              expand();
+              if (currentUser) setPollOpen(!pollOpen);
+            }}
+          >
+            <BarChart3 size={16} /> {pollOpen ? "Remove poll" : "Add poll"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

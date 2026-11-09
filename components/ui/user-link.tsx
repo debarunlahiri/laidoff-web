@@ -5,14 +5,16 @@ import type { ReactNode } from "react";
 // so their content renders as plain, non-clickable markup.
 export default function UserLink({
   id,
+  username,
   children,
 }: {
   id?: string | null;
+  username?: string | null;
   children: ReactNode;
 }) {
   if (!id) return <>{children}</>;
   return (
-    <Link href={`/users/${id}`} className="user-link">
+    <Link href={`/users/${username || id}`} className="user-link">
       {children}
     </Link>
   );

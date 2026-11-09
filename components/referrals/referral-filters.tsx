@@ -216,7 +216,7 @@ export default function ReferralFiltersBar({
           <label>
             Skill
             <input
-              placeholder="e.g. React"
+              placeholder="Search any skill"
               value={filters.skill}
               onChange={(event) => onChange({ skill: event.target.value })}
             />

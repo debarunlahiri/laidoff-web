@@ -1,4 +1,5 @@
 "use client";
+import LocationAutocomplete from "@/components/ui/location-autocomplete";
 import { api } from "@/lib/api";
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
@@ -10,7 +11,7 @@ const num = (v: string) => (v.trim() === "" ? null : Number(v));
 export function NewUserPage() {
   const [f, setF] = useState({
     name: "", email: "", password: "", headline: "", location: "",
-    openToWork: false, isAdmin: false, emailVerified: true, accountStatus: "active",
+    openToWork: false, isAdmin: false, badge: "", emailVerified: true, accountStatus: "active",
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }));
   return (
@@ -18,7 +19,7 @@ export function NewUserPage() {
       title="Create user"
       description="Add a member account directly. They can sign in with the email and password you set."
       backHref="/admin/users" backLabel="All users" submitLabel="Create user"
-      onSubmit={async () => { await api("/admin/users", { method: "POST", body: f }); }}
+      onSubmit={async () => { await api("/admin/users", { method: "POST", body: { ...f, badge: f.badge || null } }); }}
     >
       <Section title="Account" description="Sign-in details for this member.">
         <Row>
@@ -30,7 +31,11 @@ export function NewUserPage() {
       </Section>
       <Section title="Profile">
         <Input label="Professional headline" maxLength={160} value={f.headline} onChange={(e) => set("headline", e.target.value)} />
-        <Input label="Location" maxLength={160} value={f.location} onChange={(e) => set("location", e.target.value)} />
+        <LocationAutocomplete
+          label="Location"
+          value={f.location}
+          onChange={(location) => set("location", location)}
+        />
         <Check2 label="Open to work" checked={f.openToWork} onChange={(v) => set("openToWork", v)} />
       </Section>
       <Section title="Access">
@@ -38,6 +43,9 @@ export function NewUserPage() {
           <option value="active">Active</option><option value="suspended">Suspended</option><option value="deactivated">Deactivated</option>
         </Select>
         <Check2 label="Email already verified" hint="Skips the verification email gate." checked={f.emailVerified} onChange={(v) => set("emailVerified", v)} />
+        <Select label="Verified badge" value={f.badge} onChange={(e) => set("badge", e.target.value)}>
+          <option value="">None</option><option value="blue">Blue (member)</option><option value="gold">Gold (company / official)</option>
+        </Select>
         <Check2 label="Administrator" hint="Grants full access to this admin console." checked={f.isAdmin} onChange={(v) => set("isAdmin", v)} />
       </Section>
     </FormPage>
@@ -128,7 +136,12 @@ export function NewReferralPage() {
       <Section title="Role">
         <Input label="Job title" required maxLength={120} value={f.title} onChange={(e) => set("title", e.target.value)} />
         <Row>
-          <Input label="Location" required maxLength={160} value={f.location} onChange={(e) => set("location", e.target.value)} />
+          <LocationAutocomplete
+            label="Location"
+            required
+            value={f.location}
+            onChange={(location) => set("location", location)}
+          />
           <Select label="Work mode" value={f.workMode} onChange={(e) => set("workMode", e.target.value)}>
             <option value="onsite">On-site</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option>
           </Select>
@@ -139,7 +152,14 @@ export function NewReferralPage() {
           </Select>
           <Input label="Minimum years" type="number" min={0} max={60} value={f.minExperience} onChange={(e) => set("minExperience", e.target.value)} />
         </Row>
-        <Input label="Required skills" required maxLength={200} hint="Comma separated, e.g. React, TypeScript, Node" value={f.skills} onChange={(e) => set("skills", e.target.value)} />
+        <Input
+          label="Required skills"
+          required
+          maxLength={200}
+          hint="Any profession; comma separated, e.g. Teaching, Sales, Welding"
+          value={f.skills}
+          onChange={(e) => set("skills", e.target.value)}
+        />
         <TextArea label="Description" maxLength={5000} value={f.description} onChange={(e) => set("description", e.target.value)} />
       </Section>
       <Section title="Links" description="Where candidates can read more. Both are optional.">

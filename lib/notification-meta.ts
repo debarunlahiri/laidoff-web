@@ -1,5 +1,6 @@
 import {
   Bell,
+  Headset,
   Briefcase,
   MessageCircle,
   MessageSquare,
@@ -16,6 +17,12 @@ type Meta = { label: string; icon: LucideIcon; href: string };
 // Label, icon and destination for each notification type the API creates.
 export function notificationMeta(item: ApiNotification): Meta {
   switch (item.type) {
+    case "support_update":
+      return {
+        label: "Support update",
+        icon: Headset,
+        href: item.resourceId ? `/support/${item.resourceId}` : "/support",
+      };
     case "message":
       return { label: "Message", icon: MessageCircle, href: "/messages" };
     case "connection":

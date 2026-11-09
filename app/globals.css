@@ -1,30 +1,34 @@
 @import "../styles/base.css";
 @import "../styles/layout.css";
-@import "../styles/feed.css";
+@import "../styles/feed/index.css";
 @import "../styles/discovery.css";
-@import "../styles/features.css";
+@import "../styles/features/index.css";
 @import "../styles/dialogs.css";
 @import "../styles/responsive.css";
 
-@import "../styles/profile.css";
+@import "../styles/profile/index.css";
 
 @import "../styles/messages.css";
 
-@import "../styles/referrals.css";
+@import "../styles/referrals/index.css";
 @import "../styles/motion.css";
 
 @import "../styles/auth.css";
 @import "../styles/admin.css";
-@import "../styles/admin-console.css";
+@import "../styles/admin-console/index.css";
 
 @import "../styles/notifications.css";
 @import "../styles/polls.css";
 @import "../styles/post-detail.css";
 @import "../styles/messaging-dock.css";
-@import "../styles/dark.generated.css";
-@import "../styles/dark.css";
 @import "../styles/toast.css";
 @import "../styles/controls.css";
 @import "../styles/mobile.css";
 @import "../styles/network.css";
 @import "../styles/repost.css";
+
+@import "../styles/composer.css";
+@import "../styles/support.css";
+@import "../styles/settings.css";
+@import "../styles/dark.generated.css";
+@import "../styles/dark.css";

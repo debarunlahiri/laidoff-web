@@ -21,7 +21,7 @@ export default function ChatHeader({
       >
         <ArrowLeft size={20} />
       </button>
-      <UserLink id={conversation.userId}>
+      <UserLink id={conversation.userId} username={conversation.username}>
         <Avatar
           initials={conversation.initials}
           src={conversation.imageUrl}

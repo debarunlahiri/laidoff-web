@@ -1,12 +1,16 @@
 "use client";
 import { Dropdown } from "./dropdown";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, apiMessage, queryPath } from "@/lib/api";
 import Avatar from "@/components/ui/avatar";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useAuth } from "@/providers/auth-provider";
 import { useCallback, useEffect, useState } from "react";
-import { Plus,
+import {
+  BadgeCheck,
+  Plus,
   Mail,
   MailCheck,
   Search,
@@ -15,10 +19,12 @@ import { Plus,
   UserX,
   UserCheck,
   LogOut,
+  Trash2,
+  Skull,
 } from "lucide-react";
 import {
   Badge,
-  Drawer,
+  DetailPage,
   Empty,
   PageHeader,
   Panel,
@@ -34,6 +40,7 @@ type User = {
   email: string;
   name: string;
   isAdmin: boolean;
+  badge?: "blue" | "gold" | null;
   emailVerifiedAt: string | null;
   accountStatus: string;
   warningCount?: number;
@@ -55,18 +62,31 @@ type Detail = User & {
 };
 const LIMIT = 20;
 
-export default function UsersPage() {
+export default function UsersPage({ id }: { id?: string }) {
+  const router = useRouter();
   const { user: me } = useAuth();
   const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [verified, setVerified] = useState("all");
   const [role, setRole] = useState("all");
+  const [badge, setBadge] = useState("all");
   const [detail, setDetail] = useState<Detail | null>(null);
   const q = useDebounced(search);
 
-  const feed = useInfiniteList<User>("/admin/users", { search: q, status, verified, role }, LIMIT);
-  const { data, setData, error: message, setError: setMessage, reload: load, loading } = feed;
+  const feed = useInfiniteList<User>(
+    "/admin/users",
+    { search: q, status, verified, role, badge },
+    LIMIT,
+  );
+  const {
+    data,
+    setData,
+    error: message,
+    setError: setMessage,
+    reload: load,
+    loading,
+  } = feed;
 
   async function open(id: string) {
     try {
@@ -75,6 +95,10 @@ export default function UsersPage() {
       setMessage(apiMessage(e));
     }
   }
+  useEffect(() => {
+    if (id) void open(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
   async function patch(
     target: User,
     body: Record<string, unknown>,
@@ -96,7 +120,13 @@ export default function UsersPage() {
       setMessage(apiMessage(e));
     }
   }
-  async function post(target: User, path: string, done: string) {
+  async function post(
+    target: User,
+    path: string,
+    done: string,
+    ask?: Parameters<typeof confirm>[0],
+  ) {
+    if (ask && !(await confirm(ask))) return;
     try {
       await api(`/admin/users/${target.id}/${path}`, {
         method: "POST",
@@ -137,6 +167,46 @@ export default function UsersPage() {
       },
     );
 
+  // Soft-delete: deactivates the account and hides all their content from the feed.
+  const softDelete = (u: User) =>
+    patch(
+      u,
+      { accountStatus: "deactivated" },
+      {
+        title: `Delete ${u.name}'s account?`,
+        message:
+          "Their account will be deactivated and all their posts will be hidden from the platform. The data is kept and can be restored.",
+        confirmLabel: "Delete account",
+        tone: "danger",
+      },
+    );
+
+  // Hard-delete: permanently removes the user and all related data from the database.
+  async function forceDelete(u: User) {
+    if (
+      !(await confirm({
+        title: `Permanently delete ${u.name}?`,
+        message:
+          "This cannot be undone. The account, all posts, comments, referrals, messages and uploaded files will be erased from the database immediately.",
+        confirmLabel: "Force delete",
+        tone: "danger",
+      }))
+    )
+      return;
+    try {
+      await api(`/admin/users/${u.id}`, { method: "DELETE" });
+      setData((d) => ({
+        ...d,
+        items: d.items.filter((item) => item.id !== u.id),
+      }));
+      setDetail(null);
+      setMessage("Account permanently deleted.");
+      router.push("/admin/users");
+    } catch (e) {
+      setMessage(apiMessage(e));
+    }
+  }
+
   const filters = [
     {
       label: "Status",
@@ -169,14 +239,30 @@ export default function UsersPage() {
         ["member", "Members"],
       ],
     },
+    {
+      label: "Badge",
+      value: badge,
+      set: setBadge,
+      options: [
+        ["all", "Any badge"],
+        ["blue", "Blue (member)"],
+        ["gold", "Gold (company)"],
+        ["none", "No badge"],
+      ],
+    },
   ] as const;
 
   return (
     <>
+      {!id && (<>
       <PageHeader
         title="Users"
         description="Search members, review accounts and manage access."
-      actions={<Link href="/admin/users/new" className="ac-btn primary"><Plus size={15} /> New user</Link>}
+        actions={
+          <Link href="/admin/users/new" className="ac-btn primary">
+            <Plus size={15} /> New user
+          </Link>
+        }
       />
       {message && (
         <p className={/sent|revoked/i.test(message) ? "adm-ok" : "adm-error"}>
@@ -190,15 +276,16 @@ export default function UsersPage() {
             <input
               placeholder="Search by name or email"
               value={search}
-              onChange={(e) => (setSearch(e.target.value))}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </label>
           {filters.map((f) => (
-            <Dropdown compact
+            <Dropdown
+              compact
               key={f.label}
               aria-label={f.label}
               value={f.value}
-              onChange={(e) => (f.set(e.target.value))}
+              onChange={(e) => f.set(e.target.value)}
             >
               {f.options.map(([v, l]) => (
                 <option key={v} value={v}>
@@ -223,12 +310,15 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {data.items.map((u) => (
-                <tr key={u.id} className="click" onClick={() => open(u.id)}>
+                <tr key={u.id} className="click" onClick={() => router.push(`/admin/users/${u.id}`)}>
                   <td>
                     <div className="ac-person">
                       <Avatar initials={initials(u.name)} small />
                       <div>
-                        <strong>{u.name}</strong>
+                        <strong>
+                          {u.name}
+                          <VerifiedBadge type={u.badge} />
+                        </strong>
                         <small>{u.email}</small>
                       </div>
                     </div>
@@ -237,7 +327,8 @@ export default function UsersPage() {
                     <Badge value={u.accountStatus} />
                     {!!u.warningCount && (
                       <small style={{ display: "block", marginTop: 4 }}>
-                        {u.warningCount} warning{u.warningCount === 1 ? "" : "s"}
+                        {u.warningCount} warning
+                        {u.warningCount === 1 ? "" : "s"}
                       </small>
                     )}
                   </td>
@@ -279,87 +370,127 @@ export default function UsersPage() {
         <InfiniteFooter feed={feed} />
       </Panel>
 
-      {detail && (
-        <Drawer title="Member details" onClose={() => setDetail(null)}>
-          <div className="ac-profile">
-            <Avatar
-              initials={initials(detail.name)}
-              src={detail.profileImageUrl}
-            />
-            <div>
-              <h3>{detail.name}</h3>
-              <p>{detail.headline || "No headline"}</p>
-              <div className="ac-badges">
-                <Badge value={detail.accountStatus} />
-                {!!detail.warningCount && (
-                  <Badge
-                    value="warning"
-                    label={`${detail.warningCount} warning${detail.warningCount === 1 ? "" : "s"}`}
-                  />
-                )}
-                <Badge
-                  value={detail.emailVerifiedAt ? "verified" : "pending"}
-                  label={
-                    detail.emailVerifiedAt
-                      ? "Email verified"
-                      : "Email unverified"
-                  }
-                />
-                {detail.isAdmin && <Badge value="open" label="Admin" />}
-              </div>
-            </div>
-          </div>
-          <dl className="ac-facts">
-            <div>
-              <dt>Email</dt>
-              <dd>{detail.email}</dd>
-            </div>
-            <div>
-              <dt>Location</dt>
-              <dd>{detail.location || "—"}</dd>
-            </div>
-            <div>
-              <dt>Joined</dt>
-              <dd>{when(detail.createdAt)}</dd>
-            </div>
-            <div>
-              <dt>Last login</dt>
-              <dd>{when(detail.lastLoginAt)}</dd>
-            </div>
-            <div>
-              <dt>Active sessions</dt>
-              <dd>{detail.activeSessions}</dd>
-            </div>
-          </dl>
-          <div className="ac-mini">
-            {[
-              ["Posts", detail.posts],
-              ["Comments", detail.comments],
-              ["Referrals", detail.referrals],
-              ["Followers", detail.followers],
-              ["Reports against", detail.reportsAgainst],
-            ].map(([l, v]) => (
-              <div key={l}>
-                <strong>{v}</strong>
-                <span>{l}</span>
-              </div>
-            ))}
-          </div>
-          {detail.recentPosts.length > 0 && (
+      </>)}
+      {id && message && <p className="adm-error">{message}</p>}
+      {id && !detail && !message && <p className="ac-muted">Loading…</p>}
+      {id && detail && (
+        <DetailPage
+          backHref="/admin/users"
+          backLabel="All users"
+          hero={
             <>
-              <h4>Recent posts</h4>
-              <ul className="ac-recent">
-                {detail.recentPosts.map((p) => (
-                  <li key={p.id}>
-                    <span>{p.excerpt}</span>
-                    <small>{ago(p.createdAt)}</small>
-                  </li>
+              <div className="ac-hero-id">
+                <Avatar
+                  initials={initials(detail.name)}
+                  src={detail.profileImageUrl}
+                />
+                <div>
+                  <h1>
+                    {detail.name}
+                    <VerifiedBadge type={detail.badge} size={22} />
+                  </h1>
+                  <p>{detail.headline || "No headline"}</p>
+                  <div className="ac-badges">
+                    <Badge value={detail.accountStatus} />
+                    <Badge
+                      value={detail.emailVerifiedAt ? "verified" : "pending"}
+                      label={detail.emailVerifiedAt ? "Email verified" : "Email unverified"}
+                    />
+                    {detail.isAdmin && <Badge value="open" label="Admin" />}
+                    {!!detail.warningCount && (
+                      <Badge
+                        value="warning"
+                        label={`${detail.warningCount} warning${detail.warningCount === 1 ? "" : "s"}`}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="ac-hero-stats">
+                {[
+                  ["Posts", detail.posts],
+                  ["Comments", detail.comments],
+                  ["Referrals", detail.referrals],
+                  ["Followers", detail.followers],
+                  ["Reports against", detail.reportsAgainst],
+                ].map(([l, v]) => (
+                  <div key={l}>
+                    <strong>{v}</strong>
+                    <span>{l}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </>
-          )}
-          <h4>Actions</h4>
-          <div className="ac-actions">
+          }
+          aside={
+            <>
+              <section className="ac-card">
+                <h3>Account</h3>
+                <dl className="ac-facts">
+                  <div><dt>Email</dt><dd>{detail.email}</dd></div>
+                  <div><dt>Location</dt><dd>{detail.location || "—"}</dd></div>
+                  <div><dt>Joined</dt><dd>{when(detail.createdAt)}</dd></div>
+                  <div><dt>Last login</dt><dd>{when(detail.lastLoginAt)}</dd></div>
+                  <div><dt>Active sessions</dt><dd>{detail.activeSessions}</dd></div>
+                </dl>
+              </section>
+              <section className="ac-card">
+                <h3>Actions</h3>
+                <div className="ac-side-actions">
+            {detail.badge !== "blue" && (
+              <button
+                className="ac-btn"
+                onClick={() =>
+                  patch(
+                    detail,
+                    { badge: "blue" },
+                    {
+                      title: "Give the blue badge?",
+                      message: `${detail.name} will show a blue verified tick next to their name.`,
+                      confirmLabel: "Give blue badge",
+                    },
+                  )
+                }
+              >
+                <BadgeCheck size={15} /> Blue badge (member)
+              </button>
+            )}
+            {detail.badge !== "gold" && (
+              <button
+                className="ac-btn"
+                onClick={() =>
+                  patch(
+                    detail,
+                    { badge: "gold" },
+                    {
+                      title: "Give the gold badge?",
+                      message: `${detail.name} will show a gold verified tick as a company or official account.`,
+                      confirmLabel: "Give gold badge",
+                    },
+                  )
+                }
+              >
+                <BadgeCheck size={15} /> Gold badge (company)
+              </button>
+            )}
+            {detail.badge && (
+              <button
+                className="ac-btn"
+                onClick={() =>
+                  patch(
+                    detail,
+                    { badge: null },
+                    {
+                      title: "Remove the badge?",
+                      message: `${detail.name} will no longer show a verified tick.`,
+                      confirmLabel: "Remove badge",
+                    },
+                  )
+                }
+              >
+                <BadgeCheck size={15} /> Remove badge
+              </button>
+            )}
             {!detail.emailVerifiedAt && (
               <>
                 <button
@@ -369,6 +500,11 @@ export default function UsersPage() {
                       detail,
                       "send-verification",
                       `Verification email sent to ${detail.email}.`,
+                      {
+                        title: "Resend verification email?",
+                        message: `A new verification link will be sent to ${detail.email}.`,
+                        confirmLabel: "Send email",
+                      },
                     )
                   }
                 >
@@ -399,6 +535,11 @@ export default function UsersPage() {
                   detail,
                   "send-welcome",
                   `Welcome email sent to ${detail.email}.`,
+                  {
+                    title: "Send welcome email?",
+                    message: `A welcome message will be sent to ${detail.email}.`,
+                    confirmLabel: "Send email",
+                  },
                 )
               }
             >
@@ -449,8 +590,48 @@ export default function UsersPage() {
                 </button>
               </>
             )}
-          </div>
-        </Drawer>
+            {detail.id !== me?.id && (
+              <>
+                <hr className="ac-divider" />
+                {detail.accountStatus !== "deactivated" && (
+                  <button
+                    className="ac-btn danger"
+                    onClick={() => void softDelete(detail)}
+                  >
+                    <Trash2 size={15} /> Delete account
+                  </button>
+                )}
+                <button
+                  className="ac-btn danger"
+                  onClick={() => void forceDelete(detail)}
+                >
+                  <Skull size={15} /> Force delete
+                </button>
+              </>
+            )}
+                </div>
+              </section>
+            </>
+          }
+        >
+          <section className="ac-card">
+            <h3>Recent posts</h3>
+            {detail.recentPosts.length === 0 ? (
+              <p className="ac-muted">No posts yet.</p>
+            ) : (
+              <ul className="ac-recent">
+                {detail.recentPosts.map((p) => (
+                  <li key={p.id}>
+                    <Link href={`/admin/content/${p.id}`}>
+                      <span>{p.excerpt}</span>
+                      <small>{ago(p.createdAt)}</small>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </DetailPage>
       )}
     </>
   );

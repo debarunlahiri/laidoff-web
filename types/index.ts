@@ -6,7 +6,9 @@ import type {
   ReferralLevel,
   ReferralWorkMode,
 } from "@/lib/api-types";
+export type Badge = "blue" | "gold";
 export type Post = {
+  badge?: Badge | null;
   id: string;
   poll?: ApiPoll | null;
   authorId?: string | null;
@@ -17,6 +19,7 @@ export type Post = {
   reposted?: boolean;
   quoted?: ApiQuotedPost | null;
   name: string;
+  username?: string | null;
   role: string;
   avatar: string;
   avatarUrl?: string | null;
@@ -41,8 +44,10 @@ export type Post = {
   referral?: boolean;
 };
 export type Person = {
+  badge?: Badge | null;
   id?: string;
   name: string;
+  username?: string | null;
   role: string;
   initials: string;
   imageUrl?: string | null;

@@ -4,6 +4,7 @@ import {
   BriefcaseBusiness,
   Compass,
   House,
+  Headset,
   MessagesSquare,
   Users,
 } from "lucide-react";
@@ -15,6 +16,7 @@ export const navigation = [
   { label: "Workforce insights", icon: BarChart3 },
   { label: "Messages", icon: MessagesSquare },
   { label: "Bookmarks", icon: Bookmark },
+  { label: "Support", icon: Headset },
 ];
 export const sectionPaths: Record<string, string> = {
   Home: "/",
@@ -27,4 +29,6 @@ export const sectionPaths: Record<string, string> = {
   Bookmarks: "/bookmarks",
   Notifications: "/notifications",
   More: "/more",
+  Support: "/support",
+  Settings: "/settings",
 };

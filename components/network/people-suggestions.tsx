@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import Avatar from "@/components/ui/avatar";
 import UserLink from "@/components/ui/user-link";
 import { usePlatform } from "@/providers/platform-provider";
@@ -21,7 +22,7 @@ export default function PeopleSuggestions() {
       )}
       {people.slice(0, 3).map((person) => (
         <div className="suggestion" key={person.id}>
-          <UserLink id={person.id}>
+          <UserLink id={person.id} username={person.username}>
             <Avatar
               initials={person.initials}
               color={person.color}
@@ -29,7 +30,13 @@ export default function PeopleSuggestions() {
               small
             />
             <div>
-              <strong>{person.name}</strong>
+              <strong>
+                {person.name}
+                <VerifiedBadge type={person.badge} />
+              </strong>
+              {person.username && (
+                <span className="user-handle">@{person.username}</span>
+              )}
               <span>{person.role}</span>
               {person.detail && <small>{person.detail}</small>}
             </div>

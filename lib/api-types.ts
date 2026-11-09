@@ -1,6 +1,11 @@
 export type ApiProfile = {
+  // True when the member limits who can view their profile; only name and photo are returned.
+  restricted?: boolean;
+  restrictedTo?: "members" | "connections" | "only_me";
+  badge?: "blue" | "gold" | null;
   id: string;
   name: string;
+  username?: string | null;
   role: string;
   about: string | null;
   skills: string[] | null;
@@ -22,6 +27,7 @@ export type ApiPoll = {
   myVotes: string[];
 };
 export type ApiQuotedPost = {
+  badge?: "blue" | "gold" | null;
   id: string;
   text: string;
   topic: string;
@@ -29,9 +35,11 @@ export type ApiQuotedPost = {
   anonymous: boolean;
   authorId: string | null;
   name: string;
+  username?: string | null;
   image: string | null;
 };
 export type ApiPost = {
+  badge?: "blue" | "gold" | null;
   poll?: ApiPoll | null;
   profileImageUrl?: string | null;
   following: number | boolean;
@@ -40,6 +48,7 @@ export type ApiPost = {
   id: string;
   authorId: string | null;
   name: string;
+  username?: string | null;
   role: string;
   text: string;
   topic: string;
@@ -64,8 +73,10 @@ export type ApiPost = {
   quoted?: ApiQuotedPost | null;
 };
 export type ApiEngagementPerson = {
+  badge?: "blue" | "gold" | null;
   id: string;
   name: string;
+  username?: string | null;
   role: string | null;
   profileImageUrl: string | null;
   at: string;
@@ -79,10 +90,12 @@ export type ApiEngagementPerson = {
 export type EngagementType =
   "likes" | "dislikes" | "comments" | "shares" | "reposts" | "views";
 export type ApiComment = {
+  badge?: "blue" | "gold" | null;
   id: string;
   parentId: string | null;
   text: string;
   name: string;
+  username?: string | null;
   authorId: string;
   profileImageUrl: string | null;
   createdAt: string;
@@ -96,8 +109,10 @@ export type ApiComment = {
   replies?: ApiComment[];
 };
 export type ApiPerson = {
+  badge?: "blue" | "gold" | null;
   id: string;
   name: string;
+  username?: string | null;
   role: string;
   openToWork: number | boolean;
   following: number | boolean;
@@ -105,6 +120,7 @@ export type ApiPerson = {
   coverImageUrl?: string | null;
 };
 export type ApiConnection = {
+  badge?: "blue" | "gold" | null;
   id: string;
   requester_id: string;
   recipient_id: string;
@@ -162,6 +178,7 @@ export type ApiReferralAnswer = {
   file?: { id: string; name: string; size: number };
 };
 export type ApiReferralRequest = {
+  badge?: "blue" | "gold" | null;
   userId: string;
   name: string;
   role: string;
@@ -172,9 +189,11 @@ export type ApiReferralRequest = {
   answers?: ApiReferralAnswer[];
 };
 export type ApiConversation = {
+  badge?: "blue" | "gold" | null;
   id: string;
   userId: string;
   name: string;
+  username?: string | null;
   role: string;
   profileImageUrl?: string | null;
   preview: string | null;
@@ -229,15 +248,17 @@ export type ApiDailyReminder = {
   supportingText: string;
 };
 export type ApiProfileStats = {
-  posts: number;
-  likesReceived: number;
-  dislikesReceived: number;
+  posts: number | null;
+  likesReceived: number | null;
+  dislikesReceived: number | null;
   commentsReceived: number;
-  referrals: number;
-  openReferrals: number;
-  followers: number;
-  following: number;
-  connections: number;
+  referrals: number | null;
+  openReferrals: number | null;
+  followers: number | null;
+  following: number | null;
+  connections: number | null;
+  // Keys the member keeps private from this viewer.
+  hidden?: string[];
 };
 export type ApiSearchResults = {
   users: ApiPerson[];
@@ -248,8 +269,10 @@ export type ApiSearchResults = {
 };
 export type SearchGroup = keyof ApiSearchResults;
 export type ApiMemberPerson = {
+  badge?: "blue" | "gold" | null;
   id: string;
   name: string;
+  username?: string | null;
   role: string;
   profileImageUrl: string | null;
   openToWork?: number | boolean;

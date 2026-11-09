@@ -1,0 +1,299 @@
+/* ---- Drawer ---- */
+.ac-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(8, 12, 24, 0.5);
+}
+.ac-drawer {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100%);
+  height: 100%;
+  background: var(--white);
+  border-left: 1px solid var(--line);
+  box-shadow: -20px 0 60px rgba(8, 12, 24, 0.25);
+}
+.ac-drawer header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.ac-drawer header h2 {
+  font-size: 16px;
+}
+.ac-drawer header button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+.ac-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-content: start;
+  overflow-x: hidden;
+}
+.ac-drawer-body > * {
+  min-width: 0;
+}
+.ac-drawer-body li,
+.ac-drawer-body li span,
+.ac-drawer-body dd,
+.ac-drawer-body p {
+  overflow-wrap: anywhere;
+}
+.ac-drawer-body h4 {
+  margin: 4px 0 -6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ac-profile {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.ac-profile h3 {
+  font-size: 18px;
+}
+.ac-profile p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ac-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.ac-mini {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.ac-mini div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  background: var(--canvas);
+  text-align: center;
+}
+.ac-mini strong {
+  font-size: 18px;
+}
+.ac-mini span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.ac-recent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ac-recent li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--canvas);
+  font-size: 13px;
+}
+.ac-recent span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ac-recent small {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+/* ---- Post image gallery in drawer ---- */
+.ac-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.ac-image-thumb {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--canvas);
+}
+.ac-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ac-image-thumb:hover {
+  opacity: 0.85;
+}
+/* ---- Table row click ---- */
+.ac-row-click {
+  cursor: pointer;
+}
+.ac-row-click:hover td {
+  background: var(--mint);
+}
+.ac-cell-primary {
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.4;
+}
+.ac-cell-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ac-cell-badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.ac-inline-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+/* ---- Detail drawer sections ---- */
+.ac-detail-section {
+  display: grid;
+  gap: 12px;
+}
+.ac-detail-section h3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ac-post-preview {
+  padding: 14px;
+  background: var(--canvas);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.ac-drawer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.ac-muted {
+  color: var(--muted);
+}
+.ac-link {
+  color: var(--green);
+  word-break: break-all;
+}
+/* ---- Toolbar wrap variant ---- */
+.ac-toolbar-wrap {
+  flex-wrap: wrap;
+}
+/* ---- Hashtag styles ---- */
+.ac-hashtag-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ac-hashtag-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 28px minmax(120px, 1.2fr) minmax(80px, 2fr) 84px 84px;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ac-hashtag-row:hover, .ac-hashtag-row:focus-visible { background: var(--mint); outline: 0; }
+.ac-hashtag-rank { text-align: center; color: var(--muted); font-size: 12px; font-weight: 700; }
+.ac-hashtag-rank.top {
+  width: 24px; height: 24px; line-height: 24px; border-radius: 50%;
+  background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green);
+}
+.ac-hashtag-name { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-hashtag-row:hover .ac-hashtag-name { color: var(--green); }
+.ac-hashtag-bar { height: 6px; border-radius: 999px; background: var(--mint); overflow: hidden; }
+.ac-hashtag-bar i { display: block; height: 100%; border-radius: 999px; background: var(--green); }
+.ac-hashtag-count { text-align: right; font-variant-numeric: tabular-nums; }
+.ac-hashtag-count small { margin-left: 4px; color: var(--muted); font-weight: 500; font-size: 11px; }
+.ac-hashtag-time { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; color: var(--muted); font-size: 11px; }
+.ac-tagfilter { margin-bottom: 12px; max-width: 320px; flex: none; }
+.ac-tagstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.ac-tagstats > div { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); display: grid; gap: 6px; }
+.ac-tagstats span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.ac-tagstats strong { font-size: 24px; line-height: 1.1; }
+.ac-tagstats strong.sm { font-size: 17px; padding-top: 5px; }
+.ac-tagcloud { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.ac-tagcloud-label { display: inline-flex; align-items: center; gap: 5px; margin-right: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.ac-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; padding: 6px 10px 6px 6px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ac-back:hover { background: var(--mint); color: var(--ink); }
+.ac-tagposts { display: grid; }
+.ac-tagposts[aria-busy="true"] { opacity: 0.55; }
+.ac-tagpost { padding: 16px 20px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.ac-tagpost:last-child { border-bottom: 0; }
+.ac-tagpost header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+.ac-tagpost header span { color: var(--muted); }
+.ac-tagpost p { margin: 0; white-space: pre-wrap; line-height: 1.55; font-size: 14px; overflow-wrap: anywhere; }
+.ac-tagpost footer { display: flex; gap: 16px; color: var(--muted); font-size: 12px; }
+.ac-tagpost footer span { display: inline-flex; align-items: center; gap: 5px; }
+.ac-tagpost footer .bad { color: #d64545; }
+.ac-tag-mark { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); border-radius: 4px; padding: 0 2px; font-weight: 650; }
+@media (max-width: 720px) {
+  .ac-hashtag-row { grid-template-columns: 24px 1fr 64px; }
+  .ac-hashtag-bar, .ac-hashtag-time { display: none; }
+}
+/* ---- Tag chips ---- */
+.ac-tag-chip {
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ac-tag-chip em {
+  font-style: normal;
+  color: var(--muted);
+  font-weight: 400;
+}

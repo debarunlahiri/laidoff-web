@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import BrandLogo from "@/components/ui/brand-logo";
 import { useAuth } from "@/providers/auth-provider";
 import { MailCheck } from "lucide-react";
@@ -60,6 +61,9 @@ export default function VerificationRequired() {
           I’ve verified, continue
         </button>
         {message && <p className="verify-note">{message}</p>}
+        <Link href="/support" className="verify-secondary">
+          Need help? Contact support
+        </Link>
         <button className="adm-link" onClick={() => void logout()}>
           Sign out
         </button>

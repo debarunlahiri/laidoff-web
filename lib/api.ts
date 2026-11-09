@@ -33,7 +33,8 @@ export function statusMessage(status: number) {
   if (status === 403) return "You don’t have permission to do that.";
   if (status === 404) return "We couldn’t find what you were looking for.";
   if (status === 413) return "That file or message is too large.";
-  if (status === 429) return "Too many requests. Please wait a moment and try again.";
+  if (status === 429)
+    return "Too many requests. Please wait a moment and try again.";
   if (status >= 500)
     return "Our servers are having trouble right now. Please try again in a moment.";
   return "The request failed. Please try again.";
@@ -114,9 +115,9 @@ export async function api<T = void>(
 ): Promise<T> {
   const method = options.method ?? "GET";
   if (method !== "GET") {
-    // Anything that changes data: unverified members are stopped before the
-    // request, and the connection is confirmed so nothing is lost silently.
-    if (verificationBlocked) {
+    // Support stays available for verification issues. Other changes require
+    // verification; confirm the connection before sending either kind.
+    if (verificationBlocked && !/^\/support(?:\/|\?|$)/.test(path)) {
       announceUnverified("EMAIL_NOT_VERIFIED");
       throw new ApiError(unverifiedMessage, 403, "EMAIL_NOT_VERIFIED");
     }

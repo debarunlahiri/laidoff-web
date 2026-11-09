@@ -14,6 +14,7 @@ import {
   LogOut,
   Link as LinkIcon,
   Moon,
+  Settings,
   ShieldCheck,
   Sparkles,
   Sun,
@@ -119,6 +120,9 @@ export default function AccountMenu() {
           <Link href="/bookmarks" onClick={() => setOpen(false)}>
             <Bookmark size={18} /> Saved posts
           </Link>
+          <Link href="/settings" onClick={() => setOpen(false)}>
+            <Settings size={18} /> Settings
+          </Link>
           {user?.isAdmin && (
             <Link href="/admin" onClick={() => setOpen(false)}>
               <ShieldCheck size={18} /> Admin
@@ -198,12 +202,10 @@ export default function AccountMenu() {
           <button
             onClick={() => {
               setOpen(false);
-              notify(
-                "Be respectful, protect personal information, and keep referrals free. Report posts that need review from their options menu.",
-              );
+              router.push("/support");
             }}
           >
-            <CircleHelp size={18} /> Help & community guidelines
+            <CircleHelp size={18} /> Help & support
           </button>
         </div>
       )}

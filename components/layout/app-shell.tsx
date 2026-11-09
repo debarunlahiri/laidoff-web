@@ -27,6 +27,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   // only. A single post (also reported as "Home") reads better full width.
   const showRightRail = section === "Home" && pathname === "/";
   const readingPage =
+    pathname === "/explore" ||
+    pathname.startsWith("/search") ||
     pathname.startsWith("/posts/") ||
     (pathname.startsWith("/referrals/") && pathname !== "/referrals/new");
   const [collapsed, setCollapsed] = useState(false);
@@ -74,7 +76,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <VerifyEmailBanner />
         <Topbar />
         <div
-          className={`page-layout${showRightRail ? "" : " page-layout-without-rail"}${section === "Messages" || section === "Search" ? " page-layout-wide" : ""}${readingPage ? " page-layout-reading" : ""}`}
+          className={`page-layout${showRightRail ? "" : " page-layout-without-rail"}${section === "Messages" ? " page-layout-wide" : ""}${readingPage ? " page-layout-reading" : ""}`}
         >
           <main key={pathname} className="page-transition">
             <PageHeading />

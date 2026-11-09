@@ -29,7 +29,7 @@ export default function PersonCard({ person }: { person: Person }) {
         aria-hidden="true"
       />
       <div className="pc-avatar">
-        <UserLink id={person.id}>
+        <UserLink id={person.id} username={person.username}>
           <Avatar
             initials={person.initials}
             color={person.color}
@@ -39,8 +39,11 @@ export default function PersonCard({ person }: { person: Person }) {
       </div>
       <div className="pc-body">
         <h3>
-          <UserLink id={person.id}>{person.name}</UserLink>
+          <UserLink id={person.id} username={person.username}>{person.name}</UserLink>
         </h3>
+        {person.username && (
+          <p className="user-handle">@{person.username}</p>
+        )}
         <p className="pc-role">{person.role || "Community member"}</p>
         {person.detail && <span className="pc-detail">{person.detail}</span>}
       </div>

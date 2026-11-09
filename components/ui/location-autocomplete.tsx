@@ -13,6 +13,7 @@ import { useEffect, useId, useRef, useState } from "react";
 // field, so typing a location always works.
 export default function LocationAutocomplete({
   label,
+  name,
   value,
   onChange,
   placeholder = "Search a city or region",
@@ -20,6 +21,7 @@ export default function LocationAutocomplete({
   compact = false,
 }: {
   label?: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -78,6 +80,11 @@ export default function LocationAutocomplete({
         <MapPin size={16} />
         <input
           id={id}
+          name={name}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            open && options[active] ? `${id}-option-${active}` : undefined
+          }
           required={required}
           maxLength={160}
           autoComplete="off"
@@ -125,6 +132,7 @@ export default function LocationAutocomplete({
           {options.map((option, index) => (
             <li
               key={option.id}
+              id={`${id}-option-${index}`}
               role="option"
               aria-selected={index === active}
               className={index === active ? "active" : ""}
@@ -141,9 +149,7 @@ export default function LocationAutocomplete({
         </ul>
       )}
       {!compact && !mapsKey && (
-        <small className="location-hint">
-          Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable place suggestions.
-        </small>
+        <small className="location-hint">Enter your city or region.</small>
       )}
       {!compact && problem && (
         <small className="location-hint">

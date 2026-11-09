@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import Avatar from "@/components/ui/avatar";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth, userInitials } from "@/providers/auth-provider";
@@ -47,7 +48,10 @@ export default function MoreView() {
             src={user.profileImageUrl}
           />
           <span>
-            <strong>{user.name}</strong>
+            <strong>
+              {user.name}
+              <VerifiedBadge type={user.badge} />
+            </strong>
             <small>View your profile</small>
           </span>
           <ChevronRight size={20} />
@@ -76,18 +80,12 @@ export default function MoreView() {
             {text}
           </button>
         ))}
-        <button
-          onClick={() =>
-            notify(
-              "Be respectful, protect personal information, and keep referrals free. Report posts that need review from their options menu.",
-            )
-          }
-        >
+        <Link href="/support">
           <span className="more-tile-icon">
             <CircleHelp size={22} />
           </span>
-          Help
-        </button>
+          Help & support
+        </Link>
       </div>
       <div className="more-list card">
         <button role="switch" aria-checked={dark} onClick={toggle}>

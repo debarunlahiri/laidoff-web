@@ -55,24 +55,36 @@ export default function PostReportDialog() {
                 checked={category === item.value}
                 onChange={() => (setCategory(item.value), setSubcategory(""))}
               />
-              {(() => { const I = reportIcon(item.icon); return <I size={15} aria-hidden />; })()} {item.label}
+              {(() => {
+                const I = reportIcon(item.icon);
+                return <I size={15} aria-hidden />;
+              })()}{" "}
+              {item.label}
             </label>
           ))}
         </fieldset>
-          {(() => {
-            const subs = reportCategories.find((c) => c.value === category)?.subcategories ?? [];
-            return subs.length ? (
-              <div className="report-subcategories">
-                <p className="subtle-text">What best describes it?</p>
-                {subs.map((sub) => (
-                  <label key={sub.value} className="checkbox-label">
-                    <input type="radio" name="report-subcategory" value={sub.value} checked={subcategory === sub.value} onChange={() => setSubcategory(sub.value)} />
-                    {sub.label}
-                  </label>
-                ))}
-              </div>
-            ) : null;
-          })()}
+        {(() => {
+          const subs =
+            reportCategories.find((c) => c.value === category)?.subcategories ??
+            [];
+          return subs.length ? (
+            <div className="report-subcategories">
+              <p className="subtle-text">What best describes it?</p>
+              {subs.map((sub) => (
+                <label key={sub.value} className="checkbox-label">
+                  <input
+                    type="radio"
+                    name="report-subcategory"
+                    value={sub.value}
+                    checked={subcategory === sub.value}
+                    onChange={() => setSubcategory(sub.value)}
+                  />
+                  {sub.label}
+                </label>
+              ))}
+            </div>
+          ) : null;
+        })()}
 
         <label className="field-label">
           More details (optional)
@@ -85,7 +97,18 @@ export default function PostReportDialog() {
         </label>
         <div className="modal-bottom">
           <span />
-          <button className="primary" disabled={!category || reportSaving || (Boolean(reportCategories.find((c) => c.value === category)?.subcategories?.length) && !subcategory)}>
+          <button
+            className="primary"
+            disabled={
+              !category ||
+              reportSaving ||
+              (Boolean(
+                reportCategories.find((c) => c.value === category)
+                  ?.subcategories?.length,
+              ) &&
+                !subcategory)
+            }
+          >
             <Flag size={16} />
             {reportSaving ? "Submitting…" : "Submit report"}
           </button>

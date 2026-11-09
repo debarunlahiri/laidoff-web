@@ -1,0 +1,197 @@
+/* ---- Algorithm / settings ---- */
+.ac-settings-group {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.ac-setting-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
+.ac-setting-row strong {
+  display: block;
+  font-size: 14px;
+}
+.ac-setting-row small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.ac-setting-control {
+  flex-shrink: 0;
+}
+.ac-settings-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--canvas);
+  color: var(--muted);
+  font-size: 12px;
+}
+.ac-signal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.ac-signal-list li {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Existing email panels now sit directly in the page. */
+.ac-content .adm-card {
+  border-radius: 14px;
+}
+.ac-content .adm-pager {
+  padding: 12px 20px;
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+/* ---- Responsive ---- */
+@media (max-width: 1100px) {
+  .ac-kpis,
+  .ac-health {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ac-grid-2,
+  .ac-grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 860px) {
+  .ac-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ac-side {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+  }
+  .ac-side.open {
+    transform: none;
+  }
+  .ac-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(8, 12, 24, 0.5);
+  }
+  .ac-menu {
+    display: grid;
+  }
+  .ac-topbar {
+    padding: 0 16px;
+  }
+  .ac-me span {
+    display: none;
+  }
+  .ac-content {
+    padding: 18px 16px 32px;
+  }
+  .ac-mini {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .ac-kpis,
+  .ac-health {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ac-feed li {
+    flex-direction: column;
+  }
+}
+/* ---- Infinite scroll footer ---- */
+.ac-infinite {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 52px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+.ac-infinite button {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ac-infinite-spin::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid var(--line);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: ac-spin 0.7s linear infinite;
+}
+@keyframes ac-spin { to { transform: rotate(360deg); } }
+.ac-tag-chip { margin: 0 2px 2px 0; }
+
+/* ---- Content actions ---- */
+.ac-rowmenu { position: relative; display: inline-block; }
+.ac-rowmenu-list { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 210px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16); display: grid; gap: 2px; }
+.ac-rowmenu-list button { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.ac-rowmenu-list button:hover { background: var(--mint); }
+.ac-rowmenu-list button.danger { color: #d64545; }
+.ac-notice { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); font-size: 13px; font-weight: 600; }
+.ac-bulkbar { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid var(--line); background: var(--mint); font-size: 13px; }
+.ac-bulkbar strong { margin-right: auto; }
+/* Stacked label + control (WarnAuthor type/reason rows) */
+.ac-detail-row {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.ac-detail-row > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+/* Dropdown inside a stacked row fills the row width */
+.ac-detail-row .ac-dd,
+.ac-detail-row select {
+  width: 100%;
+}
+/* Horizontal label + control (Moderation topic row) */
+.ac-inline-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 10px; }
+.ac-inline-field > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.ac-inline-field select { height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font: inherit; font-size: 13px; }
+.ac-reportlist { display: grid; gap: 8px; margin-top: 12px; }
+.ac-reportitem { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+.ac-reportitem p { margin: 6px 0 0; line-height: 1.5; }
+.ac-row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ac-commentitem { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.ac-commentitem p { margin: 4px 0 0; line-height: 1.5; overflow-wrap: anywhere; }
+.ac-drawer-actions { display: flex; flex-wrap: wrap; gap: 8px; }

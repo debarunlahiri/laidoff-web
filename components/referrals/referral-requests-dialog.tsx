@@ -1,4 +1,5 @@
 "use client";
+import VerifiedBadge from "@/components/ui/verified-badge";
 import Dialog from "@/components/ui/dialog";
 import { usePlatform } from "@/providers/platform-provider";
 import Avatar from "@/components/ui/avatar";
@@ -51,7 +52,10 @@ export default function ReferralRequestsDialog() {
               small
             />
             <span>
-              <strong>{item.name}</strong>
+              <strong>
+                {item.name}
+                <VerifiedBadge type={item.badge} />
+              </strong>
               <small>
                 {item.role}
                 {item.createdAt ? ` · ${postedAgo(item.createdAt)}` : ""}

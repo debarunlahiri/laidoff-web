@@ -8,6 +8,8 @@ import { usePathname } from "next/navigation";
 export default function PageHeading() {
   const { section, openReferralForm } = usePlatform();
   const pathname = usePathname();
+  if (pathname === "/settings" || pathname.startsWith("/settings/")) return null;
+  if (pathname === "/support" || pathname.startsWith("/support/")) return null;
   if (pathname === "/referrals/new")
     return (
       <div className="page-heading">

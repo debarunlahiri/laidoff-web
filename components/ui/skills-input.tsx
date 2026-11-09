@@ -88,10 +88,11 @@ export default function SkillsInput({
           role="combobox"
           aria-expanded={open && options.length > 0}
           aria-controls={`${id}-list`}
+          aria-describedby={`${id}-hint`}
           autoComplete="off"
           disabled={full}
           placeholder={
-            skills.length ? "Add another…" : "e.g. React, TypeScript"
+            skills.length ? "Add another…" : "Search or add any skill"
           }
           value={text}
           onFocus={() => setOpen(true)}
@@ -127,6 +128,10 @@ export default function SkillsInput({
           }}
         />
       </div>
+      <small id={`${id}-hint`} className="subtle-text">
+        Skills from any profession are welcome. Choose a suggestion or type your
+        own and press Enter.
+      </small>
       {open && options.length > 0 && (
         <ul className="skills-list" id={`${id}-list`} role="listbox">
           {options.map((option, index) => (

@@ -34,7 +34,11 @@ export default function CommentReportDialog({
     try {
       await api(`/posts/${postId}/comments/${commentId}/reports`, {
         method: "POST",
-        body: { category, subcategory: subcategory || undefined, reason: reason.trim() },
+        body: {
+          category,
+          subcategory: subcategory || undefined,
+          reason: reason.trim(),
+        },
       });
       onClose();
       notify("Thanks. Your report was submitted for review.");
@@ -76,24 +80,36 @@ export default function CommentReportDialog({
                 checked={category === item.value}
                 onChange={() => (setCategory(item.value), setSubcategory(""))}
               />
-              {(() => { const I = reportIcon(item.icon); return <I size={15} aria-hidden />; })()} {item.label}
+              {(() => {
+                const I = reportIcon(item.icon);
+                return <I size={15} aria-hidden />;
+              })()}{" "}
+              {item.label}
             </label>
           ))}
         </fieldset>
-          {(() => {
-            const subs = categories.data.find((c) => c.value === category)?.subcategories ?? [];
-            return subs.length ? (
-              <div className="report-subcategories">
-                <p className="subtle-text">What best describes it?</p>
-                {subs.map((sub) => (
-                  <label key={sub.value} className="checkbox-label">
-                    <input type="radio" name="report-subcategory" value={sub.value} checked={subcategory === sub.value} onChange={() => setSubcategory(sub.value)} />
-                    {sub.label}
-                  </label>
-                ))}
-              </div>
-            ) : null;
-          })()}
+        {(() => {
+          const subs =
+            categories.data.find((c) => c.value === category)?.subcategories ??
+            [];
+          return subs.length ? (
+            <div className="report-subcategories">
+              <p className="subtle-text">What best describes it?</p>
+              {subs.map((sub) => (
+                <label key={sub.value} className="checkbox-label">
+                  <input
+                    type="radio"
+                    name="report-subcategory"
+                    value={sub.value}
+                    checked={subcategory === sub.value}
+                    onChange={() => setSubcategory(sub.value)}
+                  />
+                  {sub.label}
+                </label>
+              ))}
+            </div>
+          ) : null;
+        })()}
 
         <label className="field-label">
           More details (optional)
@@ -106,7 +122,18 @@ export default function CommentReportDialog({
         </label>
         <div className="modal-bottom">
           <span />
-          <button className="primary" disabled={!category || saving || (Boolean(categories.data.find((c) => c.value === category)?.subcategories?.length) && !subcategory)}>
+          <button
+            className="primary"
+            disabled={
+              !category ||
+              saving ||
+              (Boolean(
+                categories.data.find((c) => c.value === category)?.subcategories
+                  ?.length,
+              ) &&
+                !subcategory)
+            }
+          >
             <Flag size={16} />
             {saving ? "Submitting…" : "Submit report"}
           </button>
