@@ -9,6 +9,7 @@ import {
   Globe2,
   Settings2,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
 
 export default function FeedView() {
@@ -170,7 +171,11 @@ export default function FeedView() {
       )}
       {!feedLoading && !feedError && !filteredPosts.length && (
         <div className="empty card">
-          <Bookmark size={28} />
+          {section === "Bookmarks" ? (
+            <Bookmark size={28} />
+          ) : (
+            <MessageCircle size={28} />
+          )}
           <h3>
             {section === "Bookmarks"
               ? "A place for the posts you love."
