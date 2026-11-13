@@ -1,6 +1,7 @@
 import ThemeScript from "@/components/ui/theme-script";
 import { AuthProvider } from "@/providers/auth-provider";
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 export const metadata: Metadata = {
   title: "LaidOffCircle — Laid off, not disconnected.",
@@ -17,6 +18,7 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
