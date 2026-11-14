@@ -16,6 +16,7 @@ import {
   Building2,
   FileText,
   Flag,
+  KeyRound,
   ListChecks,
   LogOut,
   Hash,
@@ -64,6 +65,7 @@ const crumbs: Record<string, string> = {
   "/admin/audit": "Audit log",
   "/admin/system": "System health",
   "/admin/support": "Support tickets",
+  "/admin/agent-keys": "Agent API keys",
 };
 
 export default function AdminShell({
@@ -182,6 +184,7 @@ export default function AdminShell({
         { href: "/admin/support", label: "Support tickets", icon: Headset },
         { href: "/admin/algorithm", label: "Feed algorithm", icon: Settings2 },
         { href: "/admin/email", label: "Email", icon: Mail },
+        { href: "/admin/agent-keys", label: "Agent API keys", icon: KeyRound },
         { href: "/admin/audit", label: "Audit log", icon: ScrollText },
         { href: "/admin/system", label: "System health", icon: Activity },
       ],
