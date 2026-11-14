@@ -1,4 +1,5 @@
 "use client";
+import Notice from "./notice";
 import { Dropdown } from "./dropdown";
 import { api, apiMessage, queryPath } from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -24,18 +25,19 @@ export default function LogsPanel() {
     { status, search: debouncedSearch },
     LIMIT,
   );
-  const { data, error } = feed;
+  const { data, error, setError } = feed;
   return (
     <div className="adm-card">
       <div className="adm-toolbar">
         <input
           placeholder="Search recipient…"
           value={search}
-          onChange={(e) => (setSearch(e.target.value))}
+          onChange={(e) => setSearch(e.target.value)}
         />
-        <Dropdown compact
+        <Dropdown
+          compact
           value={status}
-          onChange={(e) => (setStatus(e.target.value))}
+          onChange={(e) => setStatus(e.target.value)}
         >
           <option value="">All statuses</option>
           <option value="sent">Sent</option>
@@ -44,7 +46,7 @@ export default function LogsPanel() {
         </Dropdown>
         <button onClick={feed.reload}>Refresh</button>
       </div>
-      {error && <p className="adm-error">{error}</p>}
+      <Notice message={error} onClose={() => setError("")} />
       <div className="adm-scroll">
         <table className="adm-table">
           <thead>

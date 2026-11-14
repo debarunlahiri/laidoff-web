@@ -1,4 +1,5 @@
 "use client";
+import Notice from "./notice";
 import { Dropdown } from "./dropdown";
 import { api, apiMessage, queryPath } from "@/lib/api";
 import { useConfirm } from "@/providers/confirm-provider";
@@ -28,8 +29,18 @@ export default function ModerationPage() {
   const { pending, refresh } = usePending();
   const [kind, setKind] = useState<"post" | "comment">("post");
   const [status, setStatus] = useState("open");
-  const feed = useInfiniteList<Report>("/admin/reports", { kind, status }, LIMIT);
-  const { data, setData, error: message, setError: setMessage, reload: load } = feed;
+  const feed = useInfiniteList<Report>(
+    "/admin/reports",
+    { kind, status },
+    LIMIT,
+  );
+  const {
+    data,
+    setData,
+    error: message,
+    setError: setMessage,
+    reload: load,
+  } = feed;
 
   async function act(
     report: Report,
@@ -77,12 +88,12 @@ export default function ModerationPage() {
         title="Moderation"
         description="Review what members have reported and decide what stays."
       />
-      {message && <p className="adm-error">{message}</p>}
+      <Notice message={message} onClose={() => setMessage("")} />
       <Panel flush>
         <div className="ac-toolbar">
           <Segmented
             value={kind}
-            onChange={(v) => (setKind(v))}
+            onChange={(v) => setKind(v)}
             options={[
               { value: "post", label: "Posts", count: pending.postReports },
               {
@@ -92,10 +103,11 @@ export default function ModerationPage() {
               },
             ]}
           />
-          <Dropdown compact
+          <Dropdown
+            compact
             aria-label="Status"
             value={status}
-            onChange={(e) => (setStatus(e.target.value))}
+            onChange={(e) => setStatus(e.target.value)}
           >
             <option value="open">Needs review</option>
             <option value="resolved">Resolved</option>

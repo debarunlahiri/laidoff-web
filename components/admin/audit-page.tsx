@@ -1,16 +1,10 @@
 "use client";
+import Notice from "./notice";
 import { Dropdown } from "./dropdown";
 import { api, apiMessage, queryPath } from "@/lib/api";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { Search } from "lucide-react";
-import {
-  Badge,
-  Empty,
-  PageHeader,
-  Panel,
-  useDebounced,
-  when,
-} from "./ui";
+import { Badge, Empty, PageHeader, Panel, useDebounced, when } from "./ui";
 import { InfiniteFooter, useInfiniteList } from "./use-infinite-list";
 
 type Row = {
@@ -32,15 +26,25 @@ export default function AuditPage() {
   const [outcome, setOutcome] = useState("all");
   const [open, setOpen] = useState<string | null>(null);
   const q = useDebounced(search);
-  const feed = useInfiniteList<Row>("/admin/audit", { search: q, outcome }, LIMIT);
-  const { data, setData, error: message, setError: setMessage, reload: load } = feed;
+  const feed = useInfiniteList<Row>(
+    "/admin/audit",
+    { search: q, outcome },
+    LIMIT,
+  );
+  const {
+    data,
+    setData,
+    error: message,
+    setError: setMessage,
+    reload: load,
+  } = feed;
   return (
     <>
       <PageHeader
         title="Audit log"
         description="Every change made through the API, who made it, and whether it succeeded."
       />
-      {message && <p className="adm-error">{message}</p>}
+      <Notice message={message} onClose={() => setMessage("")} />
       <Panel flush>
         <div className="ac-toolbar">
           <label className="ac-search">
@@ -48,13 +52,14 @@ export default function AuditPage() {
             <input
               placeholder="Search action or resource"
               value={search}
-              onChange={(e) => (setSearch(e.target.value))}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <Dropdown compact
+          <Dropdown
+            compact
             aria-label="Outcome"
             value={outcome}
-            onChange={(e) => (setOutcome(e.target.value))}
+            onChange={(e) => setOutcome(e.target.value)}
           >
             <option value="all">All outcomes</option>
             <option value="succeeded">Succeeded</option>

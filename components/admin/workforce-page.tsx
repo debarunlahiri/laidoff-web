@@ -1,4 +1,5 @@
 "use client";
+import Notice from "./notice";
 import Link from "next/link";
 import { api, apiMessage, queryPath } from "@/lib/api";
 import { useCallback, useEffect, useState } from "react";
@@ -27,7 +28,13 @@ export default function WorkforcePage() {
     "user_reported",
   );
   const feed = useInfiniteList<Item>("/admin/workforce", { status }, LIMIT);
-  const { data, setData, error: message, setError: setMessage, reload: load } = feed;
+  const {
+    data,
+    setData,
+    error: message,
+    setError: setMessage,
+    reload: load,
+  } = feed;
   async function set(item: Item, next: Item["status"]) {
     try {
       await api(`/admin/workforce/${item.id}`, {
@@ -51,14 +58,18 @@ export default function WorkforcePage() {
       <PageHeader
         title="Layoff reports"
         description="Member-submitted layoff events. Verify the source before they count as confirmed in Insights."
-      actions={<Link href="/admin/workforce/new" className="ac-btn primary"><Plus size={15} /> Add report</Link>}
+        actions={
+          <Link href="/admin/workforce/new" className="ac-btn primary">
+            <Plus size={15} /> Add report
+          </Link>
+        }
       />
-      {message && <p className="adm-error">{message}</p>}
+      <Notice message={message} onClose={() => setMessage("")} />
       <Panel flush>
         <div className="ac-toolbar">
           <Segmented
             value={status}
-            onChange={(v) => (setStatus(v))}
+            onChange={(v) => setStatus(v)}
             options={[
               { value: "user_reported", label: "Awaiting verification" },
               { value: "verified", label: "Verified" },

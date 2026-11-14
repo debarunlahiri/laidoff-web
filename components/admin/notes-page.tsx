@@ -1,9 +1,19 @@
 "use client";
+import Notice from "./notice";
 import { api, apiMessage } from "@/lib/api";
 import { useConfirm } from "@/providers/confirm-provider";
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle, ExternalLink, XCircle } from "lucide-react";
-import { Badge, Drawer, Empty, PageHeader, Panel, Segmented, ago, when } from "./ui";
+import {
+  Badge,
+  Drawer,
+  Empty,
+  PageHeader,
+  Panel,
+  Segmented,
+  ago,
+  when,
+} from "./ui";
 import { InfiniteFooter, useInfiniteList } from "./use-infinite-list";
 import { usePending } from "./shell";
 
@@ -35,26 +45,38 @@ function stripMd(text: string) {
 export default function NotesPage() {
   const confirm = useConfirm();
   const { refresh } = usePending();
-  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [status, setStatus] = useState<
+    "pending" | "approved" | "rejected" | "all"
+  >("pending");
   const [selected, setSelected] = useState<Note | null>(null);
   const [reason, setReason] = useState("");
 
   const feed = useInfiniteList<Note>("/admin/notes", { status }, LIMIT);
-  const { data, setData, error: message, setError: setMessage, reload: load } = feed;
+  const {
+    data,
+    setData,
+    error: message,
+    setError: setMessage,
+    reload: load,
+  } = feed;
 
   async function decide(note: Note, decision: "approved" | "rejected") {
     if (decision === "rejected" && !reason.trim()) {
       setMessage("Please enter a reason for rejecting this note.");
       return;
     }
-    if (!(await confirm({
-      title: `${decision === "approved" ? "Approve" : "Reject"} community note?`,
-      message: decision === "approved"
-        ? "This note will be shown on the post."
-        : `This note will be hidden. Reason: "${reason}"`,
-      confirmLabel: decision === "approved" ? "Approve" : "Reject",
-      tone: decision === "approved" ? "default" : "danger",
-    }))) return;
+    if (
+      !(await confirm({
+        title: `${decision === "approved" ? "Approve" : "Reject"} community note?`,
+        message:
+          decision === "approved"
+            ? "This note will be shown on the post."
+            : `This note will be hidden. Reason: "${reason}"`,
+        confirmLabel: decision === "approved" ? "Approve" : "Reject",
+        tone: decision === "approved" ? "default" : "danger",
+      }))
+    )
+      return;
     try {
       await api(`/admin/notes/${note.id}`, {
         method: "PATCH",
@@ -75,13 +97,13 @@ export default function NotesPage() {
         title="Community notes"
         description="Review user-submitted fact-checks and corrections. Approved notes appear below their post."
       />
-      {message && <p className="adm-error">{message}</p>}
+      <Notice message={message} onClose={() => setMessage("")} />
 
       <Panel flush>
         <div className="ac-toolbar">
           <Segmented
             value={status}
-            onChange={(v) => (setStatus(v))}
+            onChange={(v) => setStatus(v)}
             options={[
               { value: "pending", label: "Pending review" },
               { value: "approved", label: "Approved" },
@@ -104,26 +126,45 @@ export default function NotesPage() {
           </thead>
           <tbody>
             {data.items.map((n) => (
-              <tr key={n.id} className="ac-row-click" onClick={() => { setSelected(n); setReason(""); }}>
+              <tr
+                key={n.id}
+                className="ac-row-click"
+                onClick={() => {
+                  setSelected(n);
+                  setReason("");
+                }}
+              >
                 <td style={{ maxWidth: 220 }}>
-                  <div className="ac-cell-primary">{stripMd(n.postExcerpt).slice(0, 80)}</div>
+                  <div className="ac-cell-primary">
+                    {stripMd(n.postExcerpt).slice(0, 80)}
+                  </div>
                 </td>
                 <td style={{ maxWidth: 300 }}>
-                  <div className="ac-cell-primary">{n.content.slice(0, 100)}</div>
+                  <div className="ac-cell-primary">
+                    {n.content.slice(0, 100)}
+                  </div>
                 </td>
                 <td>
                   <div className="ac-cell-primary">{n.authorName}</div>
                   <div className="ac-cell-sub">{n.authorEmail}</div>
                 </td>
-                <td><Badge value={n.status} /></td>
-                <td style={{ color: "var(--muted)", whiteSpace: "nowrap" }}>{ago(n.createdAt)}</td>
+                <td>
+                  <Badge value={n.status} />
+                </td>
+                <td style={{ color: "var(--muted)", whiteSpace: "nowrap" }}>
+                  {ago(n.createdAt)}
+                </td>
                 <td>
                   {n.status === "pending" && (
                     <div style={{ display: "flex", gap: 6 }}>
                       <button
                         className="ac-btn sm"
                         style={{ color: "var(--green)" }}
-                        onClick={(e) => { e.stopPropagation(); setSelected(n); setReason(""); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(n);
+                          setReason("");
+                        }}
                       >
                         <CheckCircle size={13} />
                       </button>
@@ -137,15 +178,29 @@ export default function NotesPage() {
 
         {!data.items.length && (
           <Empty
-            title={status === "pending" ? "No notes pending review" : "No notes found"}
-            hint={status === "pending" ? "All community notes have been reviewed." : undefined}
+            title={
+              status === "pending"
+                ? "No notes pending review"
+                : "No notes found"
+            }
+            hint={
+              status === "pending"
+                ? "All community notes have been reviewed."
+                : undefined
+            }
           />
         )}
         <InfiniteFooter feed={feed} />
       </Panel>
 
       {selected && (
-        <Drawer title="Community note" onClose={() => { setSelected(null); setReason(""); }}>
+        <Drawer
+          title="Community note"
+          onClose={() => {
+            setSelected(null);
+            setReason("");
+          }}
+        >
           <div className="ac-detail-section">
             <h3>Original post excerpt</h3>
             <p style={{ fontSize: 13, lineHeight: 1.6, color: "var(--muted)" }}>
@@ -163,7 +218,12 @@ export default function NotesPage() {
               target="_blank"
               rel="noopener noreferrer"
               className="ac-link"
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+              }}
             >
               <ExternalLink size={13} /> {selected.sourceUrl}
             </a>
@@ -171,13 +231,42 @@ export default function NotesPage() {
           <div className="ac-detail-section">
             <h3>Submitted by</h3>
             <div className="ac-facts">
-              <div><dt>Name</dt><dd>{selected.authorName}</dd></div>
-              <div><dt>Email</dt><dd>{selected.authorEmail}</dd></div>
-              <div><dt>Submitted</dt><dd>{when(selected.createdAt)}</dd></div>
-              <div><dt>Status</dt><dd><Badge value={selected.status} /></dd></div>
-              {selected.reviewerName && <div><dt>Reviewed by</dt><dd>{selected.reviewerName}</dd></div>}
-              {selected.reviewedAt && <div><dt>Reviewed at</dt><dd>{when(selected.reviewedAt)}</dd></div>}
-              {selected.reason && <div><dt>Review reason</dt><dd>{selected.reason}</dd></div>}
+              <div>
+                <dt>Name</dt>
+                <dd>{selected.authorName}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{selected.authorEmail}</dd>
+              </div>
+              <div>
+                <dt>Submitted</dt>
+                <dd>{when(selected.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>
+                  <Badge value={selected.status} />
+                </dd>
+              </div>
+              {selected.reviewerName && (
+                <div>
+                  <dt>Reviewed by</dt>
+                  <dd>{selected.reviewerName}</dd>
+                </div>
+              )}
+              {selected.reviewedAt && (
+                <div>
+                  <dt>Reviewed at</dt>
+                  <dd>{when(selected.reviewedAt)}</dd>
+                </div>
+              )}
+              {selected.reason && (
+                <div>
+                  <dt>Review reason</dt>
+                  <dd>{selected.reason}</dd>
+                </div>
+              )}
             </div>
           </div>
           {selected.status === "pending" && (
@@ -195,10 +284,17 @@ export default function NotesPage() {
                 </label>
               </div>
               <div className="ac-drawer-actions">
-                <button className="ac-btn" style={{ color: "var(--green)" }} onClick={() => void decide(selected, "approved")}>
+                <button
+                  className="ac-btn"
+                  style={{ color: "var(--green)" }}
+                  onClick={() => void decide(selected, "approved")}
+                >
                   <CheckCircle size={15} /> Approve
                 </button>
-                <button className="ac-btn danger" onClick={() => void decide(selected, "rejected")}>
+                <button
+                  className="ac-btn danger"
+                  onClick={() => void decide(selected, "rejected")}
+                >
                   <XCircle size={15} /> Reject
                 </button>
               </div>

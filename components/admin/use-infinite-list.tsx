@@ -39,18 +39,20 @@ export function useInfiniteList<T>(
     busy.current = true;
     setLoading(true);
     const { path: p, params: q, limit: l } = latest.current;
-    api<Page<T>>(queryPath(p, { ...q, limit: l, offset: 0 })).then(
-      (r) => {
+    api<Page<T>>(queryPath(p, { ...q, limit: l, offset: 0 }))
+      .then(
+        (r) => {
+          if (id !== request.current) return;
+          setData(r);
+          setError("");
+        },
+        (e) => id === request.current && setError(apiMessage(e)),
+      )
+      .finally(() => {
         if (id !== request.current) return;
-        setData(r);
-        setError("");
-      },
-      (e) => id === request.current && setError(apiMessage(e)),
-    ).finally(() => {
-      if (id !== request.current) return;
-      busy.current = false;
-      setLoading(false);
-    });
+        busy.current = false;
+        setLoading(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, tick]);
 
@@ -64,32 +66,34 @@ export function useInfiniteList<T>(
     busy.current = true;
     setLoadingMore(true);
     const { path: p, params: q, limit: l } = latest.current;
-    api<Page<T>>(queryPath(p, { ...q, limit: l, offset: loaded.current })).then(
-      (r) => {
+    api<Page<T>>(queryPath(p, { ...q, limit: l, offset: loaded.current }))
+      .then(
+        (r) => {
+          if (id !== request.current) return;
+          setData((d) => {
+            const seen = new Set(
+              d.items.map((i) => (i as { id?: string }).id).filter(Boolean),
+            );
+            return {
+              total: r.total,
+              items: [
+                ...d.items,
+                ...r.items.filter((i) => {
+                  const rowId = (i as { id?: string }).id;
+                  return !rowId || !seen.has(rowId);
+                }),
+              ],
+            };
+          });
+          setError("");
+        },
+        (e) => id === request.current && setError(apiMessage(e)),
+      )
+      .finally(() => {
         if (id !== request.current) return;
-        setData((d) => {
-          const seen = new Set(
-            d.items.map((i) => (i as { id?: string }).id).filter(Boolean),
-          );
-          return {
-            total: r.total,
-            items: [
-              ...d.items,
-              ...r.items.filter((i) => {
-                const rowId = (i as { id?: string }).id;
-                return !rowId || !seen.has(rowId);
-              }),
-            ],
-          };
-        });
-        setError("");
-      },
-      (e) => id === request.current && setError(apiMessage(e)),
-    ).finally(() => {
-      if (id !== request.current) return;
-      busy.current = false;
-      setLoadingMore(false);
-    });
+        busy.current = false;
+        setLoadingMore(false);
+      });
   }, [data.total]);
 
   return {

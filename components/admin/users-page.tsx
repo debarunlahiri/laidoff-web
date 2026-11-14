@@ -1,4 +1,5 @@
 "use client";
+import Notice from "./notice";
 import { Dropdown } from "./dropdown";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -298,13 +299,7 @@ export default function UsersPage({ id }: { id?: string }) {
               </Link>
             }
           />
-          {message && (
-            <p
-              className={/sent|revoked/i.test(message) ? "adm-ok" : "adm-error"}
-            >
-              {message}
-            </p>
-          )}
+          <Notice message={message} onClose={() => setMessage("")} />
           <Panel flush>
             <div className="ac-toolbar">
               <label className="ac-search">
