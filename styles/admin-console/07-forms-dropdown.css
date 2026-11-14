@@ -114,3 +114,8 @@ a.ac-btn { text-decoration: none; }
 .ac-rowlink { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
 .ac-rowlink > span:last-child { display: grid; }
 .ac-companymark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--mint); color: var(--green); flex: none; }
+.confirm-dialog .ac-plain { display: block; width: 100%; box-sizing: border-box; margin: 16px 0 4px; }
+.pw-form label { display: block; margin: 14px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.pw-form input { display: block; width: 100%; box-sizing: border-box; height: 46px; margin-top: 8px; padding: 10px 44px 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); color: var(--ink); font: inherit; font-weight: 400; }
+.pw-form .pw-strength { margin-top: 12px; }
+.pw-form .auth-error { margin: 14px 0 0; }

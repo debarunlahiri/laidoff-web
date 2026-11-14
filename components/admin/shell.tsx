@@ -4,7 +4,8 @@ import { useAuth } from "@/providers/auth-provider";
 import { api } from "@/lib/api";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import Avatar from "@/components/ui/avatar";
-import { notFound, usePathname } from "next/navigation";
+import { notFound, usePathname, useRouter } from "next/navigation";
+import { useConfirm } from "@/providers/confirm-provider";
 import Link from "next/link";
 import { createContext, useContext, useEffect, useState } from "react";
 import {
@@ -16,6 +17,7 @@ import {
   FileText,
   Flag,
   ListChecks,
+  LogOut,
   Hash,
   Headset,
   LayoutDashboard,
@@ -69,7 +71,10 @@ export default function AdminShell({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+  const confirm = useConfirm();
+  const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<Pending>({
@@ -96,6 +101,25 @@ export default function AdminShell({
     };
   }, [isAdmin, tick]);
   useEffect(() => setOpen(false), [pathname]);
+  async function signOut() {
+    if (signingOut) return;
+    if (
+      !(await confirm({
+        title: "Sign out of the admin console?",
+        message: "You can sign back in any time.",
+        confirmLabel: "Sign out",
+        tone: "danger",
+      }))
+    )
+      return;
+    setSigningOut(true);
+    try {
+      await logout();
+      router.replace("/login");
+    } catch {
+      setSigningOut(false);
+    }
+  }
 
   if (loading)
     return (
@@ -250,6 +274,14 @@ export default function AdminShell({
                   <small>Administrator</small>
                 </span>
               </div>
+              <button
+                type="button"
+                className="ac-btn"
+                disabled={signingOut}
+                onClick={() => void signOut()}
+              >
+                <LogOut size={15} /> Sign out
+              </button>
             </div>
           </header>
           <main className="ac-content">{children}</main>

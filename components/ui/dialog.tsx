@@ -6,6 +6,11 @@ type DialogProps = {
   label: string;
   onClose: () => void;
   className?: string;
+  // Clicking the dim area outside the dialog closes it only when this is set.
+  // Off by default so forms and confirmations are never lost to a stray click;
+  // turn it on for read-only dialogs. Escape and the dialog's own buttons
+  // always work.
+  closeOnOutsideClick?: boolean;
   // Extra props for the dialog element (e.g. drag-and-drop handlers).
   sectionProps?: HTMLAttributes<HTMLElement>;
   children: ReactNode;
@@ -15,6 +20,7 @@ export default function Dialog({
   label,
   onClose,
   className = "",
+  closeOnOutsideClick = false,
   sectionProps,
   children,
 }: DialogProps) {
@@ -69,7 +75,10 @@ export default function Dialog({
   }, []);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div
+      className="modal-backdrop"
+      onClick={closeOnOutsideClick ? onClose : undefined}
+    >
       <section
         {...sectionProps}
         ref={dialogRef}
