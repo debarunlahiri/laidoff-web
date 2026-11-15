@@ -2,7 +2,14 @@ import ThemeScript from "@/components/ui/theme-script";
 import { AuthProvider } from "@/providers/auth-provider";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
-import { siteImage, siteName, siteOrigin, siteShare } from "@/lib/share-metadata";
+import JsonLd from "@/components/seo/json-ld";
+import {
+  siteImage,
+  siteJsonLd,
+  siteName,
+  siteOrigin,
+  siteShare,
+} from "@/lib/share-metadata";
 import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
@@ -27,12 +34,14 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const siteData = siteJsonLd();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>
       <body>
+        {siteData ? <JsonLd data={siteData} /> : null}
         <AuthProvider>{children}</AuthProvider>
         <Analytics />
       </body>
