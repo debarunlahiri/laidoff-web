@@ -12,7 +12,8 @@ const mobileOrigin = (
 
 const phone =
   /iPhone|iPod|Android.+Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|Opera Mobi|webOS|Mobile Safari|SamsungBrowser.+Mobile|\bSM-F\d|Pixel Fold|Surface Duo/i;
-const bot = /bot|crawler|spider|crawling|facebookexternalhit|preview|slurp/i;
+const bot =
+  /bot|crawler|spider|crawling|facebookexternalhit|preview|slurp|whatsapp|linkedin|slack|discord|telegram|embedly|skype|pinterest|iframely/i;
 
 function isEnabled() {
   const flag = process.env.MOBILE_REDIRECT;
