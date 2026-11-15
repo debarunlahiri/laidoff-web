@@ -71,3 +71,19 @@ Copy `.env.example` to `.env.local` and set the server-only `BACKEND_API_URL`. S
 Google sign-in uses Firebase. Fill the four `NEXT_PUBLIC_FIREBASE_*` fields from your Firebase web app, enable the Google provider/authorized domains, and configure the same project ID plus Admin credentials in the backend environment. Restart/rebuild after changing public environment values. Google stays unavailable until configured. Existing email/password accounts link Google explicitly from the account menu. Keep service-account JSON and private keys out of this frontend.
 
 For deployments behind a proxy, set `AUTH_APP_ORIGIN` to the public frontend origin if required. The backend's `AUTHENTICATION.md` documents the full setup. Feature screens now use the authenticated backend proxy.
+
+## Background refresh and data usage
+
+Live updates (messages, notifications, unread counts) arrive over a WebSocket, so the app does not need to poll while it is connected. Polling is only a fallback and is deliberately slow to save bandwidth. Polling pauses while the tab is hidden, and returning to the tab refreshes immediately.
+
+| What | Interval |
+| --- | --- |
+| Connection check (`/api/health`) | 60 s |
+| Notifications and unread summary (fallback) | 90 s |
+| Messages (fallback) and chat dock | 60–90 s |
+| Connections | 2 min |
+| People list, trending topics, referrals | 3 min |
+| Support board and tickets | 1–2 min |
+| Admin console shell | 60 s |
+
+To change one, edit the interval passed to `useApiResource` / `useApiList` in `hooks/` or the component that uses it.
