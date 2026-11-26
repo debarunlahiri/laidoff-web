@@ -24,6 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import WhatsNewDialog from "@/components/layout/whats-new-dialog";
 import { latestRelease } from "@/config/release-notes";
 import { useTheme } from "@/hooks/use-theme";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 export default function AccountMenu() {
   const { user, logout, linkGoogle } = useAuth();
@@ -67,9 +68,12 @@ export default function AccountMenu() {
 
   if (!user)
     return (
-      <Link className="primary" href="/login">
-        Sign in
-      </Link>
+      <>
+        <ThemeToggle />
+        <Link className="primary" href="/login">
+          Sign in
+        </Link>
+      </>
     );
 
   return (

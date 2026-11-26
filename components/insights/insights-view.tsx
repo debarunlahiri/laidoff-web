@@ -11,6 +11,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function InsightsView() {
   const { year, setYear, insights, insightsLoading, insightsError } =
@@ -100,7 +101,7 @@ export default function InsightsView() {
         <ShieldCheck size={18} aria-hidden="true" />
         <span>{insights.notice}</span>
       </div>
-      {insightsLoading && <p role="status">Loading workforce reports…</p>}
+      {insightsLoading && <Skeleton rows={4} label="Loading workforce reports" />}
       {insightsError && <p role="alert">{insightsError}</p>}
       <WorkforceChart />
       <CompanyTable />

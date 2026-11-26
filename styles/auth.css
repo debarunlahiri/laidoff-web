@@ -569,3 +569,7 @@ html[data-theme="dark"] .conn-banner {
 .username-hint.unavailable {
   color: #c0362c;
 }
+.auth-loading .skeleton-list,
+.auth-loading .skeleton-lines-block {
+  width: min(360px, 90vw);
+}

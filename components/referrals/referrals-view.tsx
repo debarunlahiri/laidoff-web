@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { usePlatform } from "@/providers/platform-provider";
 import { BriefcaseBusiness } from "lucide-react";
+import Skeleton from "@/components/ui/skeleton";
 
 const tabs: { key: ReferralView; label: string; personal: boolean }[] = [
   { key: "all", label: "All", personal: false },
@@ -51,7 +52,7 @@ export default function ReferralsView() {
       {board.items.map((item) => (
         <ReferralCard key={item.id} item={item} />
       ))}
-      {board.loading && <p role="status">Loading referrals…</p>}
+      {board.loading && <Skeleton rows={4} label="Loading referrals" />}
       {board.error && <p role="alert">{board.error}</p>}
       {board.hasMore && (
         <button

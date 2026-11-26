@@ -43,6 +43,7 @@ import {
   when,
 } from "./ui";
 import { InfiniteFooter, useInfiniteList } from "./use-infinite-list";
+import { SkeletonLines } from "@/components/ui/skeleton";
 
 type Post = {
   id: string;
@@ -854,7 +855,7 @@ export default function ContentPage({ id }: { id?: string }) {
         </Panel>
       )}
 
-      {id && !preview && !message && <p className="ac-muted">Loading…</p>}
+      {id && !preview && !message && <SkeletonLines lines={3} />}
       {id && preview && (
         <DetailPage
           backHref="/admin/content"

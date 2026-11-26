@@ -18,6 +18,7 @@ import Link from "next/link";
 import NotificationRow from "@/components/notifications/notification-row";
 import { notificationMeta } from "@/lib/notification-meta";
 import type { ApiNotification } from "@/lib/api-types";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function Topbar() {
   const {
@@ -167,7 +168,7 @@ export default function Topbar() {
                 </button>
               </div>
               {notificationsLoading && !notificationItems.length && (
-                <p role="status">Loading notifications…</p>
+                <Skeleton rows={3} label="Loading notifications" />
               )}
               {notificationsError && <p role="alert">{notificationsError}</p>}
               {!notificationsLoading && !notificationItems.length && (

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import MessageBubble from "./message-bubble";
 import TypingIndicator from "./typing-indicator";
 import type { ActiveConversation } from "./types";
+import { SkeletonLines } from "@/components/ui/skeleton";
 
 export default function MessageList({
   conversation,
@@ -43,7 +44,7 @@ export default function MessageList({
           Load earlier messages
         </button>
       )}
-      {loading && <p role="status">Loading messages…</p>}
+      {loading && <SkeletonLines lines={3} label="Loading messages" />}
       {conversation.messages.map((message) => (
         <MessageBubble
           key={message.id}

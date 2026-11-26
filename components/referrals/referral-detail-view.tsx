@@ -4,6 +4,7 @@ import { useApiResource } from "@/hooks/use-api-resource";
 import { queryPath } from "@/lib/api";
 import type { ApiReferral } from "@/lib/api-types";
 import { toOpportunity } from "@/lib/referral-mapper";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function ReferralDetailView({ id }: { id: string }) {
   const { data, loading, error } = useApiResource<ApiReferral[]>(
@@ -14,7 +15,7 @@ export default function ReferralDetailView({ id }: { id: string }) {
 
   return (
     <div className="post-detail">
-      {loading && !referral && <p role="status">Loading referral…</p>}
+      {loading && !referral && <Skeleton rows={3} label="Loading referral" />}
       {!loading && !referral && (
         <div className="card empty-state" role="alert">
           <strong>This referral isn’t available</strong>

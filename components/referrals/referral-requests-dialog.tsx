@@ -5,6 +5,7 @@ import { usePlatform } from "@/providers/platform-provider";
 import Avatar from "@/components/ui/avatar";
 import { fileSize, postedAgo } from "@/lib/referral-meta";
 import { Download, FileText, X } from "lucide-react";
+import Skeleton from "@/components/ui/skeleton";
 export default function ReferralRequestsDialog() {
   const {
     requestReferralId,
@@ -33,7 +34,7 @@ export default function ReferralRequestsDialog() {
           <X size={20} />
         </button>
       </div>
-      {referralRequestsLoading && <p role="status">Loading requests…</p>}
+      {referralRequestsLoading && <Skeleton rows={3} label="Loading requests" />}
       {referralRequestsError && <p role="alert">{referralRequestsError}</p>}
       {!referralRequestsLoading &&
         !referralRequestsError &&

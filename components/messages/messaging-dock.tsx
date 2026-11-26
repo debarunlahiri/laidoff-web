@@ -39,6 +39,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Skeleton, { SkeletonLines } from "@/components/ui/skeleton";
 
 const maxWindows = 2;
 
@@ -258,9 +259,7 @@ export default function MessagingDock() {
               </div>
               <div className="msg-dock-list">
                 {list.loading && !rows.length && (
-                  <p className="msg-dock-note" role="status">
-                    Loading conversations…
-                  </p>
+                  <Skeleton rows={4} label="Loading conversations" />
                 )}
                 {list.error && (
                   <p className="msg-dock-note" role="alert">
@@ -491,9 +490,7 @@ function ChatWindow({
               </button>
             )}
             {history.loading && !cache.length && (
-              <p className="msg-dock-note" role="status">
-                Loading messages…
-              </p>
+              <SkeletonLines lines={3} label="Loading messages" />
             )}
             {history.error && (
               <p className="msg-dock-note" role="alert">

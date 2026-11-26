@@ -20,3 +20,24 @@ export default function Skeleton({
     </div>
   );
 }
+
+// Shimmering text-line placeholder used in place of "Loading…" copy.
+export function SkeletonLines({
+  lines = 2,
+  label = "Loading",
+}: {
+  lines?: number;
+  label?: string;
+}) {
+  return (
+    <div className="skeleton-lines-block" role="status" aria-label={label}>
+      {Array.from({ length: lines }, (_, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className={`skeleton skeleton-line${i === lines - 1 && lines > 1 ? " short" : ""}`}
+        />
+      ))}
+    </div>
+  );
+}

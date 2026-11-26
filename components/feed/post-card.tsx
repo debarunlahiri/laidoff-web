@@ -2,6 +2,7 @@
 import VerifiedBadge from "@/components/ui/verified-badge";
 import PollView from "@/components/feed/poll-view";
 import PostImages from "@/components/feed/post-images";
+import LinkPreview from "@/components/feed/link-preview";
 import CommunityNote from "@/components/community-notes/community-note";
 import PostComments from "@/components/feed/post-comments";
 import QuotedPost from "@/components/feed/quoted-post";
@@ -474,6 +475,9 @@ export default function PostCard({
         />
       )}
       <PostImages images={post.images ?? []} author={post.name} />
+      {!editing && !post.images?.length && !post.quoted && !post.poll && (
+        <LinkPreview text={post.text} />
+      )}
       {post.quoted && <QuotedPost post={post.quoted} />}
       {post.referral && (
         <button

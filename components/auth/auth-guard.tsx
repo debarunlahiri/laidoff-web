@@ -2,8 +2,8 @@
 import { useAuth } from "@/providers/auth-provider";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { LoaderCircle } from "lucide-react";
 import VerificationRequired from "./verification-required";
+import Skeleton from "@/components/ui/skeleton";
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading, sessionError, refreshSession } = useAuth();
   const router = useRouter();
@@ -38,8 +38,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   if (!user)
     return (
       <div className="auth-loading" role="status">
-        <LoaderCircle className="auth-spinner" size={26} />
-        <span>Loading your circle…</span>
+        <Skeleton rows={3} label="Loading your circle" />
       </div>
     );
   return children;

@@ -108,7 +108,7 @@ export default function PrivacySettingsView() {
           <h2>Privacy</h2>
           <span className="settings-save-status" role="status">
             {loading ? (
-              "Loading preferences…"
+              <span className="skeleton skeleton-line short" style={{ width: 110, display: "inline-block" }} />
             ) : saving ? (
               "Saving…"
             ) : error ? (

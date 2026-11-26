@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Check2, FormPage, Input, Row, Section, TextArea } from "./forms";
 import { EMOJI_SUGGESTIONS, TAG_ICONS, tagIcon } from "./tag-icons";
+import { SkeletonLines } from "@/components/ui/skeleton";
 
 type Entry = {
   tag: string;
@@ -60,7 +61,7 @@ export function HashtagForm() {
   }, [existing]);
 
   if (error) return <p className="adm-error">{error}</p>;
-  if (!ready) return <p className="ac-muted">Loading…</p>;
+  if (!ready) return <SkeletonLines lines={3} />;
   const Icon = tagIcon(f.iconName);
   const tag = f.tag.replace(/^#/, "");
   const accent = f.accentColor || undefined;
